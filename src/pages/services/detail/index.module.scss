@@ -1,0 +1,270 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  padding: 0 $page-padding $spacing-xl;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.card {
+  width: 100%;
+  max-width: $max-content-width;
+  margin-top: $spacing-lg;
+  border-radius: $radius-xl;
+  background: $color-bg-card;
+  box-shadow: $shadow-card;
+  overflow: hidden;
+}
+
+.cover {
+  width: 100%;
+  height: 360rpx;
+  background: $color-bg-hover;
+}
+
+.main {
+  padding: $spacing-xl;
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-md;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  line-height: $line-height-tight;
+  @include text-ellipsis-multi(2);
+}
+
+.price {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-price;
+  line-height: $line-height-tight;
+  white-space: nowrap;
+}
+
+.meta {
+  margin-top: $spacing-sm;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-normal;
+}
+
+.desc {
+  margin-top: $spacing-md;
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  line-height: $line-height-loose;
+}
+
+.tags {
+  margin-top: $spacing-md;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+}
+
+.section {
+  width: 100%;
+  max-width: $max-content-width;
+}
+
+.sectionTitle {
+  margin-top: $spacing-xl;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  line-height: $line-height-tight;
+}
+
+.sectionDesc {
+  margin-top: $spacing-xs;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  line-height: $line-height-normal;
+}
+
+.dateScroll {
+  margin-top: $spacing-md;
+  padding: $spacing-sm 0;
+}
+
+.dateRow {
+  @include scroll-x-container;
+}
+
+.dateItem {
+  @include scroll-x-item(auto);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 120rpx;
+  padding: 0 $spacing-lg;
+  border-radius: $radius-lg;
+  background: $color-bg-card;
+  border: 1rpx solid $color-border;
+  margin-right: $spacing-sm;
+  box-sizing: border-box;
+  transition: all $transition-base;
+}
+
+.dateItemActive {
+  border-color: rgba(91, 108, 255, 0.5);
+  background: rgba(91, 108, 255, 0.08);
+}
+
+.dateText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-tight;
+  white-space: nowrap;
+}
+
+.dateSub {
+  margin-top: $spacing-xs;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  line-height: $line-height-tight;
+  white-space: nowrap;
+}
+
+.dateTextActive {
+  color: $color-primary-dark;
+  font-weight: $font-weight-medium;
+}
+
+.timeGrid {
+  margin-top: $spacing-md;
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.timeItem {
+  width: calc((100% - 16rpx) / 2);
+  height: 88rpx;
+  border-radius: $radius-lg;
+  background: $color-bg-card;
+  border: 1rpx solid $color-border;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.timeItemActive {
+  background: rgba(91, 108, 255, 0.1);
+  border-color: rgba(91, 108, 255, 0.5);
+}
+
+.timeText {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  white-space: nowrap;
+}
+
+.timeTextActive {
+  color: $color-primary-dark;
+  font-weight: $font-weight-medium;
+}
+
+.fixedBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: $spacing-md $page-padding;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  border-top: 1rpx solid $color-divider;
+}
+
+.fixedInner {
+  max-width: $max-content-width;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+}
+
+.fixedText {
+  flex: 1;
+  min-width: 0;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-normal;
+  @include text-ellipsis;
+}
+
+.fixedBtn {
+  height: $button-height-lg;
+  padding: 0 $spacing-xl;
+  border-radius: $radius-button;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all $transition-base;
+  box-sizing: border-box;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.fixedBtnDisabled {
+  background: $color-bg-hover;
+}
+
+.fixedBtnText {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-white;
+  white-space: nowrap;
+}
+
+.fixedBtnTextDisabled {
+  color: $color-text-tertiary;
+}
+
+.bottomSpacer {
+  height: 140rpx;
+}
+
+.notFound {
+  width: 100%;
+  max-width: $max-content-width;
+  margin-top: $spacing-xl;
+  padding: $spacing-xl;
+  border-radius: $radius-xl;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1rpx dashed $color-border;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  line-height: $line-height-normal;
+  text-align: center;
+  box-sizing: border-box;
+}
+

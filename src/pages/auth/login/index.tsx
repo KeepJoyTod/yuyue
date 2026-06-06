@@ -1,0 +1,154 @@
+import React, { useMemo, useState } from 'react';
+import { View, Text } from '@tarojs/components';
+import Taro from '@tarojs/taro';
+import classnames from 'classnames';
+import styles from './index.module.scss';
+import { useAuthStore } from '@/store/useAuthStore';
+
+const LoginPage: React.FC = () => {
+  const { redirect: redirectParam } = Taro.getCurrentInstance().router?.params ?? {};
+  const loginWithWechatMock = useAuthStore((s) => s.loginWithWechatMock);
+
+  const [agreed, setAgreed] = useState(false);
+  const [showConsentBar, setShowConsentBar] = useState(false);
+
+  const redirect = useMemo(() => {
+    if (!redirectParam) return '';
+    try {
+      return decodeURIComponent(redirectParam);
+    } catch {
+      return String(redirectParam);
+    }
+  }, [redirectParam]);
+
+  const tabPaths = useMemo(
+    () =>
+      new Set([
+        '/pages/index/index',
+        '/pages/services/index',
+        '/pages/negatives/index',
+        '/pages/orders/index',
+        '/pages/mine/index'
+      ]),
+    []
+  );
+
+  const goNext = () => {
+    const nextUser = useAuthStore.getState().user;
+    if (!nextUser?.realName) {
+      const url = redirect
+        ? `/pages/auth/realName/index?redirect=${encodeURIComponent(redirect)}`
+        : '/pages/auth/realName/index';
+      Taro.navigateTo({ url }).catch((err) => console.error('[Nav] realName error', err));
+      return;
+    }
+    if (redirect) {
+      const [path] = redirect.split('?');
+      if (tabPaths.has(path)) {
+        Taro.switchTab({ url: path }).catch((err) => console.error('[Nav] switchTab redirect error', err));
+        return;
+      }
+      Taro.redirectTo({ url: redirect }).catch((err) => console.error('[Nav] redirectTo redirect error', err));
+      return;
+    }
+    Taro.switchTab({ url: '/pages/mine/index' }).catch((err) => console.error('[Nav] mine error', err));
+  };
+
+  const handleWechat = () => {
+    if (!agreed) {
+      setShowConsentBar(true);
+      return;
+    }
+    loginWithWechatMock();
+    goNext();
+  };
+
+  return (
+    <View className={styles.container}>
+      <View
+        className={styles.backBtn}
+        onClick={() => {
+          Taro.navigateBack().catch((err) => console.error('[Nav] back error', err));
+        }}
+      >
+        <Text className={styles.backIcon}>‹</Text>
+      </View>
+
+      <View className={styles.brandRow}>
+        <View className={styles.brandIcon}>
+          <Text className={styles.brandIconText}>📷</Text>
+        </View>
+        <View className={styles.brandInfo}>
+          <Text className={styles.brandName}>琥珀映画</Text>
+          <Text className={styles.brandDesc}>记录最美的时光</Text>
+        </View>
+      </View>
+
+      <Text className={styles.title}>登录 / 注册</Text>
+      <Text className={styles.subtitle}>登录后可查看预约订单、底片及会员权益</Text>
+
+      <View className={styles.wechatBtn} onClick={handleWechat}>
+        <Text className={styles.wechatBtnText}>💚 微信一键登录</Text>
+      </View>
+
+      <View className={styles.dividerRow}>
+        <View className={styles.dividerLine} />
+        <Text className={styles.dividerText}>或</Text>
+        <View className={styles.dividerLine} />
+      </View>
+
+      <View
+        className={styles.phoneEntry}
+        onClick={() => {
+          const url = redirect
+            ? `/pages/auth/phone/index?redirect=${encodeURIComponent(redirect)}`
+            : '/pages/auth/phone/index';
+          Taro.navigateTo({ url }).catch((err) => console.error('[Nav] phone error', err));
+        }}
+      >
+        <View className={styles.phoneEntryLeft}>
+          <Text className={styles.phoneIcon}>📞</Text>
+          <Text className={styles.phoneEntryText}>手机号登录 / 注册</Text>
+        </View>
+        <Text className={styles.arrow}>›</Text>
+      </View>
+
+      <View className={styles.agreeRow}>
+        <View
+          className={classnames(styles.checkbox, agreed && styles.checkboxChecked)}
+          onClick={() => {
+            setAgreed((v) => !v);
+            setShowConsentBar(false);
+          }}
+        >
+          {agreed && <Text className={styles.checkMark}>✓</Text>}
+        </View>
+        <Text className={styles.agreeText}>
+          我已阅读并同意 <Text className={styles.agreeHighlight}>《用户服务协议》</Text> 和{' '}
+          <Text className={styles.agreeHighlight}>《隐私政策》</Text>
+        </Text>
+      </View>
+
+      {showConsentBar && (
+        <View className={styles.consentBar}>
+          <Text className={styles.consentHint}>请先勾选同意用户协议以后再登录</Text>
+          <View
+            className={styles.consentBtn}
+            onClick={() => {
+              setAgreed(true);
+              setShowConsentBar(false);
+              loginWithWechatMock();
+              goNext();
+            }}
+          >
+            <Text className={styles.consentBtnText}>同意并继续</Text>
+          </View>
+        </View>
+      )}
+
+      <Text className={styles.footer}>琥珀映画 · 专业摄影服务平台 · 技术支持</Text>
+    </View>
+  );
+};
+
+export default LoginPage;

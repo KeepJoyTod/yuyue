@@ -1,0 +1,565 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  background: #0c0b0f;
+  padding: $spacing-xl $page-padding 160rpx;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.searchBar {
+  width: 100%;
+  max-width: $max-content-width;
+  height: 72rpx;
+  border-radius: $radius-xl;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1rpx solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: 0 $spacing-lg;
+  box-sizing: border-box;
+}
+
+.searchIcon {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+}
+
+.searchPlaceholder {
+  color: #8a7f6e;
+}
+
+.storeCard {
+  width: 100%;
+  max-width: $max-content-width;
+  margin-top: $spacing-lg;
+  border-radius: $radius-xl;
+  background: $color-bg-card;
+  border: 1rpx solid $color-border;
+  box-shadow: $shadow-card;
+  padding: $spacing-lg;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.storeIcon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-lg;
+  background: rgba(216, 174, 93, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.storeIconText {
+  font-size: 28rpx;
+}
+
+.storeInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.storeTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  line-height: $line-height-tight;
+}
+
+.storeSub {
+  margin-top: 6rpx;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  line-height: $line-height-normal;
+  @include text-ellipsis;
+}
+
+.storeArrow {
+  font-size: 32rpx;
+  color: $color-text-tertiary;
+  line-height: 1;
+}
+
+.storeHeader {
+  width: 100%;
+  max-width: $max-content-width;
+  display: flex;
+  align-items: center;
+  gap: 22rpx;
+  padding: 75rpx 30rpx 22rpx;
+  box-sizing: border-box;
+}
+
+.backCircle {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 999rpx;
+  background: #251f2e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.backCircleIcon {
+  font-size: 36rpx;
+  color: #f0e8d8;
+  line-height: 1;
+}
+
+.storeHeaderTitleWrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.storeHeaderTitle {
+  font-size: 30rpx;
+  font-weight: $font-weight-semibold;
+  color: #f0e8d8;
+  line-height: 45rpx;
+}
+
+.nearbyBtn {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex: 0 0 auto;
+}
+
+.nearbyIcon {
+  font-size: 26rpx;
+  color: #c8922a;
+  line-height: 1;
+}
+
+.nearbyText {
+  font-size: 22rpx;
+  font-weight: $font-weight-medium;
+  color: #c8922a;
+  line-height: 30rpx;
+  white-space: nowrap;
+}
+
+.storeSearchBar {
+  width: 100%;
+  max-width: $max-content-width;
+  height: 72rpx;
+  border-radius: 30rpx;
+  background: #1e1828;
+  border: 1rpx solid rgba(200, 146, 42, 0.15);
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: 0 $spacing-lg;
+  box-sizing: border-box;
+}
+
+.storeSearchIcon {
+  font-size: 24rpx;
+  color: #8a7f6e;
+}
+
+.storeSearchInput {
+  flex: 1;
+  min-width: 0;
+  font-size: $font-size-md;
+  color: #f0e8d8;
+}
+
+.storeTags {
+  width: 100%;
+  max-width: $max-content-width;
+  margin-top: $spacing-lg;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+}
+
+.storeTagChip {
+  height: 56rpx;
+  padding: 0 $spacing-md;
+  border-radius: 999rpx;
+  background: #251f2e;
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.storeTagChipActive {
+  background: #c8922a;
+}
+
+.storeTagChipText {
+  font-size: $font-size-sm;
+  color: #c8b48a;
+  white-space: nowrap;
+}
+
+.storeTagChipTextActive {
+  color: #0c0b0f;
+  font-weight: $font-weight-medium;
+}
+
+.storeList {
+  width: 100%;
+  max-width: $max-content-width;
+  margin-top: $spacing-lg;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.storeItem {
+  width: 100%;
+  border-radius: $radius-xl;
+  background: #1e1828;
+  border: 1rpx solid rgba(200, 146, 42, 0.15);
+  overflow: hidden;
+  box-shadow: $shadow-card;
+}
+
+.storeCoverWrap {
+  position: relative;
+  width: 100%;
+  height: 240rpx;
+}
+
+.storeCover {
+  width: 100%;
+  height: 240rpx;
+  background: $color-bg-hover;
+}
+
+.slotBadge {
+  position: absolute;
+  top: 15rpx;
+  left: 15rpx;
+  height: 38rpx;
+  padding: 0 14rpx;
+  border-radius: 999rpx;
+  background: rgba(0, 201, 80, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.slotBadgeText {
+  font-size: 20rpx;
+  font-weight: $font-weight-medium;
+  color: #ffffff;
+  line-height: 30rpx;
+  white-space: nowrap;
+}
+
+.storeMeta {
+  padding: $spacing-lg;
+}
+
+.storeMetaTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+}
+
+.storeName {
+  flex: 1;
+  min-width: 0;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: #f0e8d8;
+  line-height: $line-height-tight;
+  @include text-ellipsis;
+}
+
+.storeDistance {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: #8a7f6e;
+  white-space: nowrap;
+}
+
+.storeAddrRow {
+  margin-top: 10rpx;
+  display: flex;
+  align-items: flex-start;
+  gap: 8rpx;
+}
+
+.storeAddrIcon {
+  font-size: 22rpx;
+  color: #8a7f6e;
+  line-height: 1.2;
+}
+
+.storeAddrText {
+  flex: 1;
+  min-width: 0;
+  font-size: $font-size-sm;
+  color: #8a7f6e;
+  line-height: $line-height-normal;
+}
+
+.storeInfoRow {
+  margin-top: 10rpx;
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  flex-wrap: wrap;
+}
+
+.storeStar {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  line-height: 1;
+}
+
+.storeRating {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: #f0e8d8;
+  line-height: $line-height-tight;
+}
+
+.storeReviews {
+  font-size: $font-size-sm;
+  color: #8a7f6e;
+  line-height: $line-height-tight;
+}
+
+.storeDot {
+  font-size: $font-size-sm;
+  color: #8a7f6e;
+  line-height: $line-height-tight;
+}
+
+.storeHoursIcon {
+  font-size: $font-size-sm;
+  color: #8a7f6e;
+  line-height: 1;
+}
+
+.storeHours {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: #8a7f6e;
+  line-height: $line-height-tight;
+  white-space: nowrap;
+}
+
+.storePills {
+  margin-top: $spacing-md;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+}
+
+.storePill {
+  height: 44rpx;
+  padding: 0 $spacing-md;
+  border-radius: $radius-round;
+  background: rgba(216, 174, 93, 0.08);
+  border: 1rpx solid rgba(216, 174, 93, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.storePillText {
+  font-size: $font-size-xs;
+  color: $color-primary-light;
+  white-space: nowrap;
+}
+
+.sectionHeader {
+  width: 100%;
+  max-width: $max-content-width;
+  margin-top: $spacing-xl;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  line-height: $line-height-tight;
+}
+
+.sectionMore {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.sectionMoreText {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  white-space: nowrap;
+}
+
+.sectionMoreArrow {
+  font-size: 28rpx;
+  color: $color-text-tertiary;
+}
+
+.list {
+  width: 100%;
+  max-width: $max-content-width;
+  margin-top: $spacing-lg;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.packageCard {
+  width: 100%;
+  border-radius: $radius-xl;
+  background: $color-bg-card;
+  border: 1rpx solid $color-border;
+  box-shadow: $shadow-card;
+  padding: $spacing-lg;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: $spacing-lg;
+}
+
+.packageImg {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: $radius-lg;
+  background: $color-bg-hover;
+  flex: 0 0 auto;
+}
+
+.packageMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.packageTag {
+  height: 40rpx;
+  padding: 0 $spacing-sm;
+  border-radius: $radius-round;
+  background: rgba(216, 174, 93, 0.18);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.packageTagText {
+  font-size: $font-size-xs;
+  color: $color-primary-light;
+  white-space: nowrap;
+}
+
+.packageName {
+  margin-top: $spacing-xs;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  line-height: $line-height-tight;
+  @include text-ellipsis;
+}
+
+.packageMeta {
+  margin-top: 6rpx;
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.packageStar {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  line-height: 1;
+}
+
+.packageRating {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-tight;
+  white-space: nowrap;
+}
+
+.packagePrice {
+  margin-top: $spacing-xs;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-price;
+  line-height: $line-height-tight;
+}
+
+.bookBtn {
+  height: $button-height-sm;
+  padding: 0 $spacing-lg;
+  border-radius: $radius-button;
+  background: $color-primary;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all $transition-base;
+  box-sizing: border-box;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.bookBtnText {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: #15131b;
+  white-space: nowrap;
+}
+
+.empty {
+  width: 100%;
+  padding: $spacing-xl;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1rpx dashed rgba(255, 255, 255, 0.12);
+  border-radius: $radius-xl;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  line-height: $line-height-normal;
+  text-align: center;
+  box-sizing: border-box;
+}

@@ -1,0 +1,39 @@
+@use '@/styles/variables.scss' as *;
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44rpx;
+  padding: 0 $spacing-sm;
+  border-radius: $radius-round;
+  font-size: $font-size-xs;
+  line-height: $line-height-tight;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.default {
+  background: $color-bg-hover;
+  color: $color-text-secondary;
+}
+
+.primary {
+  background: rgba(216, 174, 93, 0.18);
+  color: $color-primary-light;
+}
+
+.success {
+  background: rgba(0, 180, 42, 0.12);
+  color: $color-success;
+}
+
+.warning {
+  background: rgba(255, 125, 0, 0.12);
+  color: $color-warning;
+}
+
+.danger {
+  background: rgba(245, 63, 63, 0.12);
+  color: $color-error;
+}

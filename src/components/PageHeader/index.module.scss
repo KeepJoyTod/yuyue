@@ -1,0 +1,56 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  width: 100%;
+  max-width: $max-content-width;
+  padding: $spacing-xl 0 $spacing-md;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: $spacing-md;
+}
+
+.left {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-size: 44rpx;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  line-height: $line-height-tight;
+}
+
+.subtitle {
+  margin-top: $spacing-xs;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  line-height: $line-height-normal;
+  @include text-ellipsis;
+}
+
+.right {
+  height: 56rpx;
+  padding: 0 $spacing-md;
+  border-radius: $radius-button;
+  border: 1rpx solid $color-border;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.rightText {
+  font-size: $font-size-sm;
+  color: $color-primary-dark;
+  white-space: nowrap;
+}
+

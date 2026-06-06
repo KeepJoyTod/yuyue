@@ -1,0 +1,177 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  padding: 0 $page-padding $spacing-xl;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.card {
+  width: 100%;
+  max-width: $max-content-width;
+  margin-top: $spacing-lg;
+  padding: $spacing-xl;
+  border-radius: $radius-xl;
+  background: $color-bg-card;
+  box-shadow: $shadow-card;
+  box-sizing: border-box;
+}
+
+.title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  line-height: $line-height-tight;
+}
+
+.sub {
+  margin-top: $spacing-xs;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  line-height: $line-height-normal;
+}
+
+.summaryRow {
+  margin-top: $spacing-lg;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+}
+
+.summaryLeft {
+  flex: 1;
+  min-width: 0;
+}
+
+.summaryName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  line-height: $line-height-tight;
+  @include text-ellipsis;
+}
+
+.summaryMeta {
+  margin-top: $spacing-xs;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-normal;
+  @include text-ellipsis;
+}
+
+.summaryPrice {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-price;
+  line-height: $line-height-tight;
+  white-space: nowrap;
+}
+
+.form {
+  margin-top: $spacing-xl;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.label {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  line-height: $line-height-tight;
+}
+
+.input {
+  height: $button-height-md;
+  border-radius: $radius-lg;
+  background: $color-bg-card;
+  border: 1rpx solid $color-border;
+  padding: 0 $spacing-lg;
+  box-sizing: border-box;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+}
+
+.tips {
+  margin-top: $spacing-lg;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  line-height: $line-height-loose;
+}
+
+.submitBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: $spacing-md $page-padding;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  border-top: 1rpx solid $color-divider;
+}
+
+.submitInner {
+  max-width: $max-content-width;
+  margin: 0 auto;
+}
+
+.submitBtn {
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all $transition-base;
+  box-sizing: border-box;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.submitBtnDisabled {
+  background: $color-bg-hover;
+}
+
+.submitText {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-white;
+  white-space: nowrap;
+}
+
+.submitTextDisabled {
+  color: $color-text-tertiary;
+}
+
+.bottomSpacer {
+  height: 140rpx;
+}
+
+.notFound {
+  width: 100%;
+  max-width: $max-content-width;
+  margin-top: $spacing-xl;
+  padding: $spacing-xl;
+  border-radius: $radius-xl;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1rpx dashed $color-border;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  line-height: $line-height-normal;
+  text-align: center;
+  box-sizing: border-box;
+}
+

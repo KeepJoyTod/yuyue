@@ -1,0 +1,186 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding: $spacing-xl $page-padding 160rpx;
+  box-sizing: border-box;
+}
+
+.backBtn {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-round;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1rpx solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
+
+.backIcon {
+  font-size: 28rpx;
+  color: $color-text-secondary;
+  line-height: 1;
+}
+
+.brandRow {
+  margin-top: $spacing-xl;
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.brandIcon {
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: $radius-xl;
+  background: $color-primary;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.brandIconText {
+  font-size: 40rpx;
+  color: #15131b;
+}
+
+.brandInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.brandName {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  line-height: $line-height-tight;
+}
+
+.brandDesc {
+  margin-top: 6rpx;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  line-height: $line-height-normal;
+  @include text-ellipsis;
+}
+
+.title {
+  margin-top: $spacing-xl;
+  font-size: 44rpx;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  line-height: $line-height-tight;
+}
+
+.subtitle {
+  margin-top: $spacing-md;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  line-height: $line-height-loose;
+}
+
+.label {
+  margin-top: $spacing-xl;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.input {
+  margin-top: $spacing-md;
+  height: 104rpx;
+  border-radius: $radius-xl;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1rpx solid rgba(255, 255, 255, 0.08);
+  padding: 0 $spacing-lg;
+  box-sizing: border-box;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+}
+
+.noteCard {
+  margin-top: $spacing-lg;
+  border-radius: $radius-xl;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1rpx solid rgba(255, 255, 255, 0.06);
+  padding: $spacing-lg;
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-md;
+}
+
+.noteIcon {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: $radius-round;
+  background: rgba(216, 174, 93, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.noteIconText {
+  font-size: 22rpx;
+  color: $color-primary;
+}
+
+.noteText {
+  flex: 1;
+  min-width: 0;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  line-height: $line-height-loose;
+}
+
+.submitBtn {
+  margin-top: $spacing-xl;
+  height: 104rpx;
+  border-radius: $radius-xl;
+  background: rgba(216, 174, 93, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.99);
+  }
+}
+
+.submitBtnDisabled {
+  background: rgba(216, 174, 93, 0.14);
+}
+
+.submitText {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+}
+
+.submitTextDisabled {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 40rpx;
+  text-align: center;
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.18);
+}
