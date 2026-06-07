@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, Input, Image } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import styles from './index.module.scss';
-import { serviceCategories, serviceList } from '@/data/services';
+import { fetchServiceCategories, fetchServices } from '@/api/services';
+import { fetchStores } from '@/api/stores';
 import { useBookingStore } from '@/store/useBookingStore';
-import type { ServiceCategoryId } from '@/types/domain';
+import type { ServiceCategory, ServiceCategoryId, ServiceItem, StoreItem } from '@/types/domain';
 
 const BookingPage: React.FC = () => {
   const selectedStore = useBookingStore((s) => s.selectedStore);
@@ -14,49 +15,78 @@ const BookingPage: React.FC = () => {
   const [keyword, setKeyword] = useState('');
   const [storeKeyword, setStoreKeyword] = useState('');
   const [storeTag, setStoreTag] = useState<'all' | '婚纱' | '写真' | '儿童'>('all');
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  const [services, setServices] = useState<ServiceItem[]>([]);
+  const [stores, setStores] = useState<StoreItem[]>([]);
+  const [loadingServices, setLoadingServices] = useState(true);
+  const [loadingStores, setLoadingStores] = useState(true);
+  const [serviceError, setServiceError] = useState('');
+  const [storeError, setStoreError] = useState('');
 
-  const stores = useMemo(
-    () => [
-      {
-        id: 'store_jingan',
-        name: '琥珀映画·静安旗舰店',
-        address: '静安区南京西路 1168 号嘉里中心 3F',
-        distanceKm: 0.8,
-        rating: 4.9,
-        reviews: 2341,
-        hours: '10:00–21:00',
-        tags: ['婚纱', '写真', '儿童'] as const,
-        coverUrl: 'https://picsum.photos/id/325/750/500',
-        hasSlotToday: true
-      },
-      {
-        id: 'store_lujiazui',
-        name: '琥珀映画·陆家嘴店',
-        address: '浦东新区世纪大道 88 号金茂大厦 L2',
-        distanceKm: 2.3,
-        rating: 4.8,
-        reviews: 1680,
-        hours: '10:00–21:00',
-        tags: ['婚纱', '写真'] as const,
-        coverUrl: 'https://picsum.photos/id/369/750/500',
-        hasSlotToday: true
-      }
-    ],
-    []
-  );
+  useEffect(() => {
+    let alive = true;
+
+    setLoadingServices(true);
+    setServiceError('');
+    Promise.all([fetchServiceCategories(), fetchServices()])
+      .then(([nextCategories, nextServices]) => {
+        if (!alive) return;
+        setCategories(nextCategories);
+        setServices(nextServices);
+      })
+      .catch((err) => {
+        if (!alive) return;
+        console.error('[Services] load services error', err);
+        setServiceError('套系加载失败，请稍后重试');
+      })
+      .finally(() => {
+        if (alive) setLoadingServices(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+
+    setLoadingStores(true);
+    setStoreError('');
+    fetchStores()
+      .then((nextStores) => {
+        if (!alive) return;
+        setStores(nextStores);
+        if (!selectedStore?.id && nextStores[0]) {
+          setSelectedStore({ id: nextStores[0].id, name: nextStores[0].name, address: nextStores[0].address });
+        }
+      })
+      .catch((err) => {
+        if (!alive) return;
+        console.error('[Services] load stores error', err);
+        setStoreError('门店加载失败，请稍后重试');
+      })
+      .finally(() => {
+        if (alive) setLoadingStores(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [selectedStore?.id, setSelectedStore]);
 
   const categoryNameById = useMemo(() => {
-    const map = new Map(serviceCategories.map((c) => [c.id, c.name]));
+    const map = new Map(categories.map((c) => [c.id, c.name]));
     return (id: ServiceCategoryId) => map.get(id) ?? '';
-  }, []);
+  }, [categories]);
 
   const filtered = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
-    return serviceList.filter((p) => {
+    return services.filter((p) => {
       if (!kw) return true;
-      return `${categoryNameById(p.categoryId)} ${p.name}`.toLowerCase().includes(kw);
+      return `${p.categoryName ?? categoryNameById(p.categoryId)} ${p.name}`.toLowerCase().includes(kw);
     });
-  }, [categoryNameById, keyword]);
+  }, [categoryNameById, keyword, services]);
 
   const filteredStores = useMemo(() => {
     const kw = storeKeyword.trim().toLowerCase();
@@ -126,7 +156,9 @@ const BookingPage: React.FC = () => {
         </View>
 
         <View className={styles.storeList}>
-          {filteredStores.map((s) => (
+          {loadingStores && <Text className={styles.empty}>门店加载中...</Text>}
+          {!loadingStores && storeError && <Text className={styles.empty}>{storeError}</Text>}
+          {!loadingStores && !storeError && filteredStores.map((s) => (
             <View
               key={s.id}
               className={styles.storeItem}
@@ -172,7 +204,7 @@ const BookingPage: React.FC = () => {
             </View>
           ))}
 
-          {filteredStores.length === 0 && <Text className={styles.empty}>没有匹配的门店</Text>}
+          {!loadingStores && !storeError && filteredStores.length === 0 && <Text className={styles.empty}>没有匹配的门店</Text>}
         </View>
       </View>
     );
@@ -224,7 +256,9 @@ const BookingPage: React.FC = () => {
       </View>
 
       <View className={styles.list}>
-        {filtered.map((p) => (
+        {loadingServices && <Text className={styles.empty}>套系加载中...</Text>}
+        {!loadingServices && serviceError && <Text className={styles.empty}>{serviceError}</Text>}
+        {!loadingServices && !serviceError && filtered.map((p) => (
           <View key={p.id} className={styles.packageCard}>
             <Image
               className={styles.packageImg}
@@ -234,7 +268,7 @@ const BookingPage: React.FC = () => {
             />
             <View className={styles.packageMain}>
               <View className={styles.packageTag}>
-                <Text className={styles.packageTagText}>{categoryNameById(p.categoryId)}</Text>
+                <Text className={styles.packageTagText}>{p.categoryName ?? categoryNameById(p.categoryId)}</Text>
               </View>
               <Text className={styles.packageName}>{p.name}</Text>
               <View className={styles.packageMeta}>
@@ -255,7 +289,7 @@ const BookingPage: React.FC = () => {
             </View>
           </View>
         ))}
-        {filtered.length === 0 && <Text className={styles.empty}>没有匹配的套系</Text>}
+        {!loadingServices && !serviceError && filtered.length === 0 && <Text className={styles.empty}>没有匹配的套系</Text>}
       </View>
     </View>
   );

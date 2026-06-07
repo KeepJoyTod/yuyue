@@ -1,20 +1,25 @@
 import Taro from '@tarojs/taro';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { fetchCurrentUser, loginByPhone, updateRealName } from '@/api/auth';
+import { clearAuthToken, setAuthToken } from '@/api/token';
 
 export interface AuthUser {
+  id?: string;
   nickName: string;
   phone?: string;
   realName?: string;
+  avatarUrl?: string;
 }
 
 interface AuthState {
   isLoggedIn: boolean;
   loginMethod?: 'wechat' | 'phone';
+  token?: string;
   user?: AuthUser;
-  loginWithWechatMock: () => void;
-  loginWithPhoneMock: (phone: string) => void;
-  setRealName: (realName: string) => void;
+  loginWithPhone: (phone: string, code: string) => Promise<void>;
+  restoreCurrentUser: () => Promise<void>;
+  saveRealName: (realName: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -50,53 +55,51 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       isLoggedIn: false,
       loginMethod: undefined,
+      token: undefined,
       user: undefined,
-      loginWithWechatMock: () => {
-        const prev = get().user;
-        set({
-          isLoggedIn: true,
-          loginMethod: 'wechat',
-          user: {
-            nickName: '微信用户',
-            phone: undefined,
-            realName: prev?.realName
-          }
-        });
-        console.info('[Auth] loginWithWechatMock');
-      },
-      loginWithPhoneMock: (phone: string) => {
-        const prev = get().user;
+      loginWithPhone: async (phone: string, code: string) => {
+        const result = await loginByPhone(phone, code);
+        setAuthToken(result.token);
         set({
           isLoggedIn: true,
           loginMethod: 'phone',
-          user: {
-            nickName: prev?.nickName || '微信用户',
-            phone,
-            realName: prev?.realName
-          }
+          token: result.token,
+          user: result.user
         });
-        console.info('[Auth] loginWithPhoneMock', { phone });
+        console.info('[Auth] loginWithPhone', { phone });
       },
-      setRealName: (realName: string) => {
-        const prev = get().user;
-        if (!prev) return;
+      restoreCurrentUser: async () => {
+        const token = get().token;
+        if (!token) return;
+        setAuthToken(token);
+        const user = await fetchCurrentUser();
         set({
-          user: {
-            ...prev,
-            realName
-          }
+          isLoggedIn: true,
+          user
         });
-        console.info('[Auth] setRealName');
+        console.info('[Auth] restoreCurrentUser');
+      },
+      saveRealName: async (realName: string) => {
+        const user = await updateRealName(realName);
+        set({
+          isLoggedIn: true,
+          user
+        });
+        console.info('[Auth] saveRealName');
       },
       logout: () => {
-        set({ isLoggedIn: false, loginMethod: undefined, user: undefined });
+        clearAuthToken();
+        set({ isLoggedIn: false, loginMethod: undefined, token: undefined, user: undefined });
         console.info('[Auth] logout');
       }
     }),
     {
       name: 'auth-store',
       storage: createJSONStorage(() => storage),
-      partialize: (state) => ({ isLoggedIn: state.isLoggedIn, loginMethod: state.loginMethod, user: state.user })
+      partialize: (state) => ({ isLoggedIn: state.isLoggedIn, loginMethod: state.loginMethod, token: state.token, user: state.user }),
+      onRehydrateStorage: () => (state) => {
+        if (state?.token) setAuthToken(state.token);
+      }
     }
   )
 );

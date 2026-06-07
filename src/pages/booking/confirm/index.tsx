@@ -1,33 +1,66 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Input } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
-import { serviceList } from '@/data/services';
+import { fetchServiceDetail } from '@/api/services';
+import { createRemoteBooking } from '@/api/orders';
 import { useBookingStore } from '@/store/useBookingStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { formatDuration, formatPrice } from '@/utils/format';
+import type { ServiceItem } from '@/types/domain';
 
 const BookingConfirmPage: React.FC = () => {
-  const { serviceId, date, time } = Taro.getCurrentInstance().router?.params ?? {};
-  const service = useMemo(() => serviceList.find((s) => s.id === serviceId), [serviceId]);
+  const { serviceId, date, time, scheduleId } = Taro.getCurrentInstance().router?.params ?? {};
 
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const authUser = useAuthStore((s) => s.user);
-  const createBooking = useBookingStore((s) => s.createBooking);
   const selectedStore = useBookingStore((s) => s.selectedStore);
 
   const [userName, setUserName] = useState('');
   const [userPhone, setUserPhone] = useState('');
+  const [service, setService] = useState<ServiceItem>();
+  const [loadingService, setLoadingService] = useState(true);
+  const [serviceError, setServiceError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const canSubmit = !!service && !!date && !!time && userName.trim().length > 0 && userPhone.trim().length >= 8;
+  const canSubmit =
+    !!service && !!date && !!time && !!scheduleId && userName.trim().length > 0 && userPhone.trim().length >= 8 && !submitting;
+
+  useEffect(() => {
+    if (!serviceId) {
+      setLoadingService(false);
+      setServiceError('参数缺失，请返回重新选择');
+      return;
+    }
+
+    let alive = true;
+    setLoadingService(true);
+    setServiceError('');
+    fetchServiceDetail(serviceId)
+      .then((nextService) => {
+        if (alive) setService(nextService);
+      })
+      .catch((err) => {
+        if (!alive) return;
+        console.error('[BookingConfirm] load service error', err);
+        setServiceError('服务加载失败，请返回重新选择');
+      })
+      .finally(() => {
+        if (alive) setLoadingService(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [serviceId]);
 
   useEffect(() => {
     if (isLoggedIn) return;
     if (!serviceId || !date || !time) return;
     const redirect = `/pages/booking/confirm/index?serviceId=${encodeURIComponent(serviceId)}&date=${encodeURIComponent(
       date
-    )}&time=${encodeURIComponent(time)}`;
+    )}&time=${encodeURIComponent(time)}${scheduleId ? `&scheduleId=${encodeURIComponent(scheduleId)}` : ''}`;
     Taro.redirectTo({ url: `/pages/auth/login/index?redirect=${encodeURIComponent(redirect)}` }).catch((err) =>
       console.error('[Nav] redirectTo login error', err)
     );
@@ -43,10 +76,10 @@ const BookingConfirmPage: React.FC = () => {
     if (!userPhone && authUser.phone) setUserPhone(authUser.phone);
   }, [authUser, userName, userPhone]);
 
-  if (!service || !date || !time) {
+  if (loadingService || serviceError || !service || !date || !time) {
     return (
       <View className={styles.container}>
-        <Text className={styles.notFound}>参数缺失，请返回重新选择</Text>
+        <Text className={styles.notFound}>{loadingService ? '服务加载中...' : serviceError || '参数缺失，请返回重新选择'}</Text>
       </View>
     );
   }
@@ -91,7 +124,7 @@ const BookingConfirmPage: React.FC = () => {
           </View>
         </View>
 
-        <Text className={styles.tips}>温馨提示：此项目为演示版，数据仅保存在本地。</Text>
+        <Text className={styles.tips}>温馨提示：提交后将生成真实后端订单，可在「订单」中查看状态。</Text>
       </View>
 
       <View className={styles.bottomSpacer} />
@@ -108,38 +141,35 @@ const BookingConfirmPage: React.FC = () => {
                 return;
               }
 
-              try {
-                const next = createBooking({
-                  serviceId: service.id,
-                  serviceName: service.name,
-                  serviceCoverUrl: service.coverUrl,
-                  storeId: selectedStore.id,
-                  storeName: selectedStore.name,
-                  storeAddress: selectedStore.address,
-                  price: service.price,
-                  durationMin: service.durationMin,
-                  userName: userName.trim(),
-                  userPhone: userPhone.trim(),
-                  date,
-                  time
-                });
-
-                Taro.showToast({ title: '预约已提交', icon: 'success' }).catch((err) =>
-                  console.error('[Toast] showToast error', err)
-                );
-                Taro.switchTab({ url: '/pages/orders/index' }).catch((err) =>
-                  console.error('[Nav] switchTab orders error', err)
-                );
-                console.info('[Booking] created and redirect', { id: next.id });
-              } catch (err) {
-                console.error('[Booking] createBooking error', err);
-                Taro.showToast({ title: '提交失败，请重试', icon: 'none' }).catch((toastErr) =>
-                  console.error('[Toast] showToast error', toastErr)
-                );
-              }
+              setSubmitting(true);
+              createRemoteBooking({
+                serviceId: service.id,
+                storeId: selectedStore.id,
+                scheduleId: String(scheduleId),
+                contactName: userName.trim(),
+                contactPhone: userPhone.trim()
+              })
+                .then((next) => {
+                  Taro.showToast({ title: '预约已提交', icon: 'success' }).catch((err) =>
+                    console.error('[Toast] showToast error', err)
+                  );
+                  Taro.switchTab({ url: '/pages/orders/index' }).catch((err) =>
+                    console.error('[Nav] switchTab orders error', err)
+                  );
+                  console.info('[Booking] created and redirect', { id: next.id });
+                })
+                .catch((err) => {
+                  console.error('[Booking] createBooking error', err);
+                  Taro.showToast({ title: '提交失败，请重试', icon: 'none' }).catch((toastErr) =>
+                    console.error('[Toast] showToast error', toastErr)
+                  );
+                })
+                .finally(() => setSubmitting(false));
             }}
           >
-            <Text className={classnames(styles.submitText, !canSubmit && styles.submitTextDisabled)}>提交预约</Text>
+            <Text className={classnames(styles.submitText, !canSubmit && styles.submitTextDisabled)}>
+              {submitting ? '提交中...' : '提交预约'}
+            </Text>
           </View>
         </View>
       </View>

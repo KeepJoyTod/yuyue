@@ -1,35 +1,80 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, Image, ScrollView } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import dayjs from 'dayjs';
 import classnames from 'classnames';
 import styles from './index.module.scss';
-import { serviceList } from '@/data/services';
+import { fetchServiceDetail } from '@/api/services';
+import { fetchStoreSchedules } from '@/api/stores';
 import Tag from '@/components/Tag';
 import { formatDuration, formatPrice } from '@/utils/format';
 import { useAuthStore } from '@/store/useAuthStore';
-
-const timeSlots = ['10:00', '10:30', '11:00', '14:00', '14:30', '15:00', '19:00', '19:30'];
+import { useBookingStore } from '@/store/useBookingStore';
+import type { ScheduleDay, ScheduleSlot, ServiceItem } from '@/types/domain';
 
 const ServiceDetailPage: React.FC = () => {
   const { serviceId } = Taro.getCurrentInstance().router?.params ?? {};
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const selectedStore = useBookingStore((s) => s.selectedStore);
 
-  const service = useMemo(() => serviceList.find((s) => s.id === serviceId), [serviceId]);
-  const dateOptions = useMemo(() => {
-    const base = dayjs();
-    return Array.from({ length: 7 }).map((_, idx) => base.add(idx + 1, 'day'));
-  }, []);
-
-  const [activeDate, setActiveDate] = useState<string>(() => dateOptions[0]?.format('YYYY-MM-DD') ?? '');
+  const [service, setService] = useState<ServiceItem>();
+  const [schedules, setSchedules] = useState<ScheduleDay[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [activeDate, setActiveDate] = useState<string>('');
   const [activeTime, setActiveTime] = useState<string>('');
+  const [activeScheduleId, setActiveScheduleId] = useState<string>('');
 
-  const canGoNext = !!service && !!activeDate && !!activeTime;
+  useEffect(() => {
+    if (!serviceId) {
+      setLoading(false);
+      setError('服务不存在或已下架');
+      return;
+    }
 
-  if (!service) {
+    let alive = true;
+    const startDate = dayjs().add(1, 'day').format('YYYY-MM-DD');
+
+    setLoading(true);
+    setError('');
+    Promise.all([
+      fetchServiceDetail(serviceId),
+      fetchStoreSchedules({ storeId: selectedStore.id, serviceId, startDate, days: 7 })
+    ])
+      .then(([nextService, nextSchedules]) => {
+        if (!alive) return;
+        setService(nextService);
+        setSchedules(nextSchedules);
+        setActiveDate(nextSchedules.find((day) => day.slots.some((slot) => slot.available))?.date ?? nextSchedules[0]?.date ?? '');
+        setActiveTime('');
+        setActiveScheduleId('');
+      })
+      .catch((err) => {
+        if (!alive) return;
+        console.error('[ServiceDetail] load detail error', err);
+        setError('服务或档期加载失败，请稍后重试');
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [selectedStore.id, serviceId]);
+
+  const dateOptions = useMemo(() => schedules.map((day) => day.date), [schedules]);
+  const timeSlots = useMemo<ScheduleSlot[]>(
+    () => schedules.find((day) => day.date === activeDate)?.slots ?? [],
+    [activeDate, schedules]
+  );
+
+  const canGoNext = !!service && !!activeDate && !!activeTime && !!activeScheduleId;
+
+  if (loading || error || !service) {
     return (
       <View className={styles.container}>
-        <Text className={styles.notFound}>服务不存在或已下架</Text>
+        <Text className={styles.notFound}>{loading ? '服务加载中...' : error || '服务不存在或已下架'}</Text>
       </View>
     );
   }
@@ -65,19 +110,22 @@ const ServiceDetailPage: React.FC = () => {
         <Text className={styles.sectionDesc}>优先选择你最方便的时间</Text>
         <ScrollView className={styles.dateScroll} scrollX>
           <View className={styles.dateRow}>
-            {dateOptions.map((d) => {
-              const value = d.format('YYYY-MM-DD');
+            {dateOptions.map((value) => {
               const isActive = value === activeDate;
               return (
                 <View
                   key={value}
                   className={classnames(styles.dateItem, isActive && styles.dateItemActive)}
-                  onClick={() => setActiveDate(value)}
+                  onClick={() => {
+                    setActiveDate(value);
+                    setActiveTime('');
+                    setActiveScheduleId('');
+                  }}
                 >
                   <Text className={classnames(styles.dateText, isActive && styles.dateTextActive)}>
-                    {d.format('MM/DD')}
+                    {dayjs(value).format('MM/DD')}
                   </Text>
-                  <Text className={styles.dateSub}>{d.format('ddd')}</Text>
+                  <Text className={styles.dateSub}>{dayjs(value).format('ddd')}</Text>
                 </View>
               );
             })}
@@ -87,20 +135,27 @@ const ServiceDetailPage: React.FC = () => {
 
       <View className={styles.section}>
         <Text className={styles.sectionTitle}>选择时间</Text>
-        <Text className={styles.sectionDesc}>共 {timeSlots.length} 个可选时段</Text>
+        <Text className={styles.sectionDesc}>共 {timeSlots.filter((slot) => slot.available).length} 个可选时段</Text>
         <View className={styles.timeGrid}>
-          {timeSlots.map((t) => {
-            const isActive = t === activeTime;
+          {timeSlots.map((slot) => {
+            const isActive = slot.scheduleId === activeScheduleId;
             return (
               <View
-                key={t}
-                className={classnames(styles.timeItem, isActive && styles.timeItemActive)}
-                onClick={() => setActiveTime(t)}
+                key={slot.scheduleId}
+                className={classnames(styles.timeItem, isActive && styles.timeItemActive, !slot.available && styles.timeItemDisabled)}
+                onClick={() => {
+                  if (!slot.available) return;
+                  setActiveTime(slot.time);
+                  setActiveScheduleId(slot.scheduleId);
+                }}
               >
-                <Text className={classnames(styles.timeText, isActive && styles.timeTextActive)}>{t}</Text>
+                <Text className={classnames(styles.timeText, isActive && styles.timeTextActive, !slot.available && styles.timeTextDisabled)}>
+                  {slot.time}
+                </Text>
               </View>
             );
           })}
+          {timeSlots.length === 0 && <Text className={styles.notFound}>当前日期暂无可选档期</Text>}
         </View>
       </View>
 
@@ -118,7 +173,7 @@ const ServiceDetailPage: React.FC = () => {
                 );
                 return;
               }
-              const url = `/pages/booking/confirm/index?serviceId=${service.id}&date=${activeDate}&time=${activeTime}`;
+              const url = `/pages/booking/confirm/index?serviceId=${service.id}&date=${activeDate}&time=${activeTime}&scheduleId=${activeScheduleId}`;
               if (!isLoggedIn) {
                 Taro.navigateTo({ url: `/pages/auth/login/index?redirect=${encodeURIComponent(url)}` }).catch((err) =>
                   console.error('[Nav] navigateTo login error', err)

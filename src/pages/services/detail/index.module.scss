@@ -176,6 +176,10 @@
   border-color: rgba(91, 108, 255, 0.5);
 }
 
+.timeItemDisabled {
+  opacity: 0.45;
+}
+
 .timeText {
   font-size: $font-size-md;
   color: $color-text-secondary;
@@ -185,6 +189,10 @@
 .timeTextActive {
   color: $color-primary-dark;
   font-weight: $font-weight-medium;
+}
+
+.timeTextDisabled {
+  color: $color-text-tertiary;
 }
 
 .fixedBar {

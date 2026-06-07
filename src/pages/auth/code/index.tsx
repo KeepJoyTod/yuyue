@@ -15,14 +15,15 @@ const maskPhone = (phone: string) => {
 
 const LoginCodePage: React.FC = () => {
   const { phone = '', redirect: redirectParam } = Taro.getCurrentInstance().router?.params ?? {};
-  const loginWithPhoneMock = useAuthStore((s) => s.loginWithPhoneMock);
+  const loginWithPhone = useAuthStore((s) => s.loginWithPhone);
 
   const [code, setCode] = useState('');
   const [leftSec, setLeftSec] = useState(55);
+  const [submitting, setSubmitting] = useState(false);
   const inputRef = useRef<any>(null);
 
   const masked = useMemo(() => maskPhone(decodeURIComponent(phone)), [phone]);
-  const canSubmit = code.length === CODE_LEN;
+  const canSubmit = code.length === CODE_LEN && !submitting;
   const redirect = useMemo(() => {
     if (!redirectParam) return '';
     try {
@@ -152,11 +153,26 @@ const LoginCodePage: React.FC = () => {
             );
             return;
           }
-          loginWithPhoneMock(decodeURIComponent(phone));
-          goNext();
+          setSubmitting(true);
+          loginWithPhone(decodeURIComponent(phone), code)
+            .then(() => {
+              Taro.showToast({ title: '登录成功', icon: 'success' }).catch((err) =>
+                console.error('[Toast] showToast error', err)
+              );
+              goNext();
+            })
+            .catch((err) => {
+              console.error('[Auth] phone login error', err);
+              Taro.showToast({ title: '登录失败，请重试', icon: 'none' }).catch((toastErr) =>
+                console.error('[Toast] showToast error', toastErr)
+              );
+            })
+            .finally(() => setSubmitting(false));
         }}
       >
-        <Text className={classnames(styles.submitText, !canSubmit && styles.submitTextDisabled)}>验证并登录</Text>
+        <Text className={classnames(styles.submitText, !canSubmit && styles.submitTextDisabled)}>
+          {submitting ? '登录中...' : '验证并登录'}
+        </Text>
       </View>
 
       <Text className={styles.footer}>琥珀映画 · 专业摄影服务平台 · 技术支持</Text>

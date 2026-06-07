@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
+  h2:
+    console:
+      enabled: false
+
+amber:
+  web:
+    allowed-origin-patterns: ${AMBER_ALLOWED_ORIGIN_PATTERNS}
+  auth:
+    token-secret: ${AMBER_TOKEN_SECRET}
+  admin:
+    token: ${AMBER_ADMIN_TOKEN}

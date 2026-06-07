@@ -1,52 +1,19 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, Image } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
+import { fetchNegativeSessions, type NegativeSession } from '@/api/negatives';
 import { useAuthStore } from '@/store/useAuthStore';
 
 type NegativeStatus = 'pendingSelect' | 'pendingSubmit' | 'completed';
 type TabKey = 'all' | NegativeStatus;
-
-interface NegativeSession {
-  id: string;
-  coverUrl: string;
-  name: string;
-  shootDate: string;
-  totalCount: number;
-  selectedCount?: number;
-  refinedCount?: number;
-  status: NegativeStatus;
-}
 
 const tabList: { key: TabKey; text: string }[] = [
   { key: 'all', text: '全部' },
   { key: 'pendingSelect', text: '待选片' },
   { key: 'pendingSubmit', text: '待提交' },
   { key: 'completed', text: '已完成' }
-];
-
-const mockSessions: NegativeSession[] = [
-  {
-    id: 'neg_001',
-    coverUrl: 'https://picsum.photos/id/64/300/300',
-    name: '琥珀 · 轻奢写真',
-    shootDate: '2026-06-08',
-    totalCount: 186,
-    selectedCount: 0,
-    refinedCount: 40,
-    status: 'pendingSelect'
-  },
-  {
-    id: 'neg_002',
-    coverUrl: 'https://picsum.photos/id/91/300/300',
-    name: '梦境 · 白纱系列',
-    shootDate: '2026-05-20',
-    totalCount: 312,
-    selectedCount: 40,
-    refinedCount: 40,
-    status: 'completed'
-  }
 ];
 
 const statusText: Record<NegativeStatus, string> = {
@@ -59,9 +26,38 @@ const NegativesPage: React.FC = () => {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const [mode, setMode] = useState<'list' | 'select'>('list');
   const [tab, setTab] = useState<TabKey>('all');
-  const [sessions, setSessions] = useState<NegativeSession[]>(mockSessions);
+  const [sessions, setSessions] = useState<NegativeSession[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setSessions([]);
+      return;
+    }
+
+    let alive = true;
+    setLoading(true);
+    setError('');
+    fetchNegativeSessions()
+      .then((nextSessions) => {
+        if (alive) setSessions(nextSessions);
+      })
+      .catch((err) => {
+        if (!alive) return;
+        console.error('[Negatives] load sessions error', err);
+        setError('底片加载失败，请稍后重试');
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [isLoggedIn]);
 
   const list = useMemo(() => {
     if (tab === 'all') return sessions;
@@ -89,7 +85,7 @@ const NegativesPage: React.FC = () => {
 
     const limit = session.refinedCount ?? 0;
     const initialCount = Math.min(limit, session.selectedCount ?? 0);
-    const initialSelected = Array.from({ length: initialCount }, (_, i) => `${session.id}_p_${i + 1}`);
+    const initialSelected = session.photos.slice(0, initialCount).map((photo) => photo.id);
     setSelectedPhotoIds(initialSelected);
     setActiveSessionId(session.id);
     setMode('select');
@@ -132,13 +128,7 @@ const NegativesPage: React.FC = () => {
 
   const photos = useMemo(() => {
     if (!activeSession) return [];
-    const count = Math.min(activeSession.totalCount, 60);
-    return Array.from({ length: count }, (_, i) => {
-      const index = i + 1;
-      const id = `${activeSession.id}_p_${index}`;
-      const src = `https://picsum.photos/seed/${encodeURIComponent(id)}/300/300`;
-      return { id, src };
-    });
+    return activeSession.photos.slice(0, 60);
   }, [activeSession]);
 
   if (mode === 'select' && isLoggedIn && activeSession) {
@@ -227,7 +217,9 @@ const NegativesPage: React.FC = () => {
           </View>
 
           <View className={styles.list}>
-            {list.map((s) => {
+            {loading && <Text className={styles.empty}>底片加载中...</Text>}
+            {!loading && error && <Text className={styles.empty}>{error}</Text>}
+            {!loading && !error && list.map((s) => {
               const done = s.status === 'completed';
               const isPendingSelect = s.status === 'pendingSelect';
               const isPendingSubmit = s.status === 'pendingSubmit';
@@ -320,6 +312,7 @@ const NegativesPage: React.FC = () => {
                 </View>
               );
             })}
+            {!loading && !error && list.length === 0 && <Text className={styles.empty}>这里还没有底片</Text>}
           </View>
         </>
       )}

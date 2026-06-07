@@ -9,9 +9,10 @@ const RealNamePage: React.FC = () => {
   const { redirect: redirectParam } = Taro.getCurrentInstance().router?.params ?? {};
   const user = useAuthStore((s) => s.user);
   const loginMethod = useAuthStore((s) => s.loginMethod);
-  const setRealName = useAuthStore((s) => s.setRealName);
+  const saveRealName = useAuthStore((s) => s.saveRealName);
 
   const [realName, setRealNameInput] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const redirect = useMemo(() => {
     if (!redirectParam) return '';
@@ -52,7 +53,7 @@ const RealNamePage: React.FC = () => {
     return p.replace(/\s/g, '');
   }, [loginMethod, user?.phone]);
 
-  const canSubmit = realName.trim().length >= 2;
+  const canSubmit = realName.trim().length >= 2 && !submitting;
 
   return (
     <View className={styles.container}>
@@ -106,21 +107,33 @@ const RealNamePage: React.FC = () => {
             );
             return;
           }
-          setRealName(realName.trim());
-          if (redirect) {
-            const [path] = redirect.split('?');
-            if (tabPaths.has(path)) {
-              Taro.switchTab({ url: path }).catch((err) => console.error('[Nav] switchTab redirect error', err));
-            } else {
-              Taro.redirectTo({ url: redirect }).catch((err) => console.error('[Nav] redirectTo redirect error', err));
-            }
-          } else {
-            Taro.switchTab({ url: '/pages/mine/index' }).catch((err) => console.error('[Nav] mine error', err));
-          }
-          Taro.showToast({ title: '登录成功', icon: 'success' }).catch((err) => console.error('[Toast] error', err));
+          setSubmitting(true);
+          saveRealName(realName.trim())
+            .then(() => {
+              if (redirect) {
+                const [path] = redirect.split('?');
+                if (tabPaths.has(path)) {
+                  Taro.switchTab({ url: path }).catch((err) => console.error('[Nav] switchTab redirect error', err));
+                } else {
+                  Taro.redirectTo({ url: redirect }).catch((err) => console.error('[Nav] redirectTo redirect error', err));
+                }
+              } else {
+                Taro.switchTab({ url: '/pages/mine/index' }).catch((err) => console.error('[Nav] mine error', err));
+              }
+              Taro.showToast({ title: '登录成功', icon: 'success' }).catch((err) => console.error('[Toast] error', err));
+            })
+            .catch((err) => {
+              console.error('[Auth] save real name error', err);
+              Taro.showToast({ title: '保存失败，请重试', icon: 'none' }).catch((toastErr) =>
+                console.error('[Toast] showToast error', toastErr)
+              );
+            })
+            .finally(() => setSubmitting(false));
         }}
       >
-        <Text className={classnames(styles.submitText, !canSubmit && styles.submitTextDisabled)}>立即注册并登录</Text>
+        <Text className={classnames(styles.submitText, !canSubmit && styles.submitTextDisabled)}>
+          {submitting ? '提交中...' : '立即注册并登录'}
+        </Text>
       </View>
 
       <Text className={styles.footer}>琥珀映画 · 专业摄影服务平台 · 技术支持</Text>

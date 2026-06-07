@@ -12,7 +12,7 @@ export interface StoreInfo {
 }
 
 const defaultStore: StoreInfo = {
-  id: 'store_jingan',
+  id: '1',
   name: '琥珀映画·静安旗舰店',
   address: '静安区南京西路 1168 号嘉里中心 3F'
 };

@@ -1,0 +1,33 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: amber-film-server
+  datasource:
+    url: ${DB_URL:jdbc:h2:file:./data/amber-film;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+    driver-class-name: ${DB_DRIVER:org.h2.Driver}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+amber:
+  web:
+    allowed-origin-patterns: ${AMBER_ALLOWED_ORIGIN_PATTERNS:*}
+  auth:
+    token-secret: ${AMBER_TOKEN_SECRET:dev-secret-change-me}
+    token-ttl-seconds: ${AMBER_TOKEN_TTL_SECONDS:604800}
+  admin:
+    token: ${AMBER_ADMIN_TOKEN:dev-admin-token}
+
+logging:
+  pattern:
+    level: "%5p [traceId:%X{traceId:-}]"
+  level:
+    com.amberfilm: INFO

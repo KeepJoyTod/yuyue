@@ -3,11 +3,9 @@ import { View, Text } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
-import { useAuthStore } from '@/store/useAuthStore';
 
 const LoginPage: React.FC = () => {
   const { redirect: redirectParam } = Taro.getCurrentInstance().router?.params ?? {};
-  const loginWithWechatMock = useAuthStore((s) => s.loginWithWechatMock);
 
   const [agreed, setAgreed] = useState(false);
   const [showConsentBar, setShowConsentBar] = useState(false);
@@ -21,46 +19,14 @@ const LoginPage: React.FC = () => {
     }
   }, [redirectParam]);
 
-  const tabPaths = useMemo(
-    () =>
-      new Set([
-        '/pages/index/index',
-        '/pages/services/index',
-        '/pages/negatives/index',
-        '/pages/orders/index',
-        '/pages/mine/index'
-      ]),
-    []
-  );
-
-  const goNext = () => {
-    const nextUser = useAuthStore.getState().user;
-    if (!nextUser?.realName) {
-      const url = redirect
-        ? `/pages/auth/realName/index?redirect=${encodeURIComponent(redirect)}`
-        : '/pages/auth/realName/index';
-      Taro.navigateTo({ url }).catch((err) => console.error('[Nav] realName error', err));
-      return;
-    }
-    if (redirect) {
-      const [path] = redirect.split('?');
-      if (tabPaths.has(path)) {
-        Taro.switchTab({ url: path }).catch((err) => console.error('[Nav] switchTab redirect error', err));
-        return;
-      }
-      Taro.redirectTo({ url: redirect }).catch((err) => console.error('[Nav] redirectTo redirect error', err));
-      return;
-    }
-    Taro.switchTab({ url: '/pages/mine/index' }).catch((err) => console.error('[Nav] mine error', err));
-  };
-
   const handleWechat = () => {
     if (!agreed) {
       setShowConsentBar(true);
       return;
     }
-    loginWithWechatMock();
-    goNext();
+    Taro.showToast({ title: '微信登录待接入，请使用手机号登录', icon: 'none' }).catch((err) =>
+      console.error('[Toast] showToast error', err)
+    );
   };
 
   return (
@@ -137,8 +103,9 @@ const LoginPage: React.FC = () => {
             onClick={() => {
               setAgreed(true);
               setShowConsentBar(false);
-              loginWithWechatMock();
-              goNext();
+              Taro.showToast({ title: '微信登录待接入，请使用手机号登录', icon: 'none' }).catch((err) =>
+                console.error('[Toast] showToast error', err)
+              );
             }}
           >
             <Text className={styles.consentBtnText}>同意并继续</Text>

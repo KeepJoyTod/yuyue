@@ -1,9 +1,20 @@
 import React, { useEffect } from 'react';
 import { useDidShow, useDidHide } from '@tarojs/taro';
+import { useAuthStore } from '@/store/useAuthStore';
 // 全局样式
 import './app.scss';
 
 function App(props) {
+  useEffect(() => {
+    useAuthStore
+      .getState()
+      .restoreCurrentUser()
+      .catch((err) => {
+        console.error('[Auth] restore current user error', err);
+        useAuthStore.getState().logout();
+      });
+  }, []);
+
   // 可以使用所有的 React Hooks
   useEffect(() => {
     if (process.env.TARO_ENV !== 'h5') return;

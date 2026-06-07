@@ -9,18 +9,46 @@ export interface ServiceItem {
   id: string;
   name: string;
   categoryId: ServiceCategoryId;
+  categoryName?: string;
   coverUrl: string;
   price: number;
+  priceCent?: number;
   durationMin: number;
   desc: string;
   tags: string[];
   rating?: number;
 }
 
+export interface StoreItem {
+  id: string;
+  name: string;
+  address: string;
+  distanceKm: number;
+  rating: number;
+  reviews: number;
+  hours: string;
+  tags: string[];
+  coverUrl: string;
+  hasSlotToday: boolean;
+}
+
+export interface ScheduleSlot {
+  scheduleId: string;
+  time: string;
+  available: boolean;
+  remaining: number;
+}
+
+export interface ScheduleDay {
+  date: string;
+  slots: ScheduleSlot[];
+}
+
 export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
 
 export interface BookingItem {
   id: string;
+  orderNo?: string;
   serviceId: string;
   serviceName: string;
   serviceCoverUrl: string;
@@ -34,5 +62,6 @@ export interface BookingItem {
   date: string;
   time: string;
   status: BookingStatus;
+  payStatus?: string;
   createdAt: string;
 }

@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import styles from './index.module.scss';
-import type { BookingStatus } from '@/types/domain';
+import type { BookingItem, BookingStatus } from '@/types/domain';
 import Tag from '@/components/Tag';
-import { useBookingStore } from '@/store/useBookingStore';
+import { cancelOrder, completeOrder, fetchOrderDetail } from '@/api/orders';
 import { formatDuration, formatPrice } from '@/utils/format';
 
 const statusText: Record<BookingStatus, string> = {
@@ -24,20 +24,42 @@ const statusTone: Record<BookingStatus, 'default' | 'primary' | 'success' | 'war
 const OrderDetailPage: React.FC = () => {
   const { id } = Taro.getCurrentInstance().router?.params ?? {};
 
-  const hydrateDefaults = useBookingStore((s) => s.hydrateDefaults);
-  const bookings = useBookingStore((s) => s.bookings);
-  const updateStatus = useBookingStore((s) => s.updateStatus);
+  const [booking, setBooking] = useState<BookingItem>();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    hydrateDefaults();
-  }, [hydrateDefaults]);
+    if (!id) {
+      setLoading(false);
+      setError('订单不存在或已被清空');
+      return;
+    }
 
-  const booking = useMemo(() => bookings.find((b) => b.id === id), [bookings, id]);
+    let alive = true;
+    setLoading(true);
+    setError('');
+    fetchOrderDetail(id)
+      .then((next) => {
+        if (alive) setBooking(next);
+      })
+      .catch((err) => {
+        if (!alive) return;
+        console.error('[OrderDetail] load detail error', err);
+        setError('订单加载失败，请稍后重试');
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
 
-  if (!booking) {
+    return () => {
+      alive = false;
+    };
+  }, [id]);
+
+  if (loading || error || !booking) {
     return (
       <View className={styles.container}>
-        <Text className={styles.notFound}>订单不存在或已被清空</Text>
+        <Text className={styles.notFound}>{loading ? '订单加载中...' : error || '订单不存在或已被清空'}</Text>
       </View>
     );
   }
@@ -87,10 +109,19 @@ const OrderDetailPage: React.FC = () => {
           <View
             className={styles.primaryBtn}
             onClick={() => {
-              updateStatus(booking.id, 'completed');
-              Taro.showToast({ title: '已标记完成', icon: 'success' }).catch((err) =>
-                console.error('[Toast] showToast error', err)
-              );
+              completeOrder(booking.id)
+                .then((next) => {
+                  setBooking(next);
+                  Taro.showToast({ title: '已标记完成', icon: 'success' }).catch((err) =>
+                    console.error('[Toast] showToast error', err)
+                  );
+                })
+                .catch((err) => {
+                  console.error('[OrderDetail] complete order error', err);
+                  Taro.showToast({ title: '操作失败，请重试', icon: 'none' }).catch((toastErr) =>
+                    console.error('[Toast] showToast error', toastErr)
+                  );
+                });
             }}
           >
             <Text className={styles.primaryText}>完成服务</Text>
@@ -120,10 +151,19 @@ const OrderDetailPage: React.FC = () => {
               })
                 .then((res) => {
                   if (!res.confirm) return;
-                  updateStatus(booking.id, 'cancelled');
-                  Taro.showToast({ title: '已取消', icon: 'success' }).catch((err) =>
-                    console.error('[Toast] showToast error', err)
-                  );
+                  cancelOrder(booking.id)
+                    .then((next) => {
+                      setBooking(next);
+                      Taro.showToast({ title: '已取消', icon: 'success' }).catch((err) =>
+                        console.error('[Toast] showToast error', err)
+                      );
+                    })
+                    .catch((err) => {
+                      console.error('[OrderDetail] cancel order error', err);
+                      Taro.showToast({ title: '取消失败，请重试', icon: 'none' }).catch((toastErr) =>
+                        console.error('[Toast] showToast error', toastErr)
+                      );
+                    });
                 })
                 .catch((err) => console.error('[Modal] showModal error', err));
             }}
