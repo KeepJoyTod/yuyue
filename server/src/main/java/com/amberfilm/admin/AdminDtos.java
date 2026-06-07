@@ -93,6 +93,8 @@ public final class AdminDtos {
       String title,
       String type,
       String imageUrl,
+      String fileId,
+      String downloadUrl,
       String status,
       String createdAt) {
   }
@@ -104,5 +106,42 @@ public final class AdminDtos {
       String targetId,
       String detailJson,
       String createdAt) {
+  }
+
+  public record UpsertServiceRequest(
+      Long categoryId,
+      String name,
+      String coverUrl,
+      Integer priceCent,
+      Integer durationMin,
+      String description,
+      String tagsJson,
+      BigDecimal rating,
+      Boolean enabled) {
+  }
+
+  public record UpsertStoreRequest(
+      String name,
+      String address,
+      BigDecimal distanceKm,
+      BigDecimal rating,
+      Integer reviews,
+      String hours,
+      String tagsJson,
+      String coverUrl,
+      Boolean enabled) {
+  }
+
+  public record UpsertScheduleRequest(
+      Long storeId,
+      Long serviceId,
+      String serviceDate,
+      String startTime,
+      String endTime,
+      Integer capacity,
+      String status) {
+  }
+
+  public record UpdateOrderRequest(String status, String payStatus, Boolean userHidden) {
   }
 }

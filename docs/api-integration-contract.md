@@ -4,12 +4,12 @@
 
 本项目当前主要使用本地数据和本地状态：
 
-- 服务列表：`src/data/services.ts:11`
-- 初始订单：`src/data/bookings.ts:3`
-- 登录状态：`src/store/useAuthStore.ts:48`
-- 订单状态：`src/store/useBookingStore.ts:75`
-- 预约创建：`src/pages/booking/confirm/index.tsx:112`
-- 订单状态更新：`src/pages/orders/index.tsx:176`
+- 服务列表：`client/src/data/services.ts:11`
+- 初始订单：`client/src/data/bookings.ts:3`
+- 登录状态：`client/src/store/useAuthStore.ts:48`
+- 订单状态：`client/src/store/useBookingStore.ts:75`
+- 预约创建：`client/src/pages/booking/confirm/index.tsx:112`
+- 订单状态更新：`client/src/pages/orders/index.tsx:176`
 
 后续对接后，这些位置应逐步迁移到 API 请求层。
 
@@ -18,14 +18,14 @@
 建议新增：
 
 ```text
-src/api/request.ts
-src/api/auth.ts
-src/api/services.ts
-src/api/stores.ts
-src/api/schedules.ts
-src/api/orders.ts
-src/api/negatives.ts
-src/types/api.ts
+client/src/api/request.ts
+client/src/api/auth.ts
+client/src/api/services.ts
+client/src/api/stores.ts
+client/src/api/schedules.ts
+client/src/api/orders.ts
+client/src/api/negatives.ts
+client/src/types/api.ts
 ```
 
 `request.ts` 统一处理：
@@ -389,15 +389,15 @@ Authorization: Bearer <token>
 
 | 当前文件 | 当前行为 | 替换目标 |
 | --- | --- | --- |
-| `src/data/services.ts` | 本地套餐数据 | `GET /api/services` |
-| `src/data/bookings.ts` | 本地订单样例 | 删除或仅开发模式保留 |
-| `src/store/useAuthStore.ts` | mock 登录 | 登录 API + token |
-| `src/store/useBookingStore.ts` | 本地订单真源 | 仅保留临时状态和缓存 |
-| `src/pages/services/index.tsx` | 页面内门店常量 | `GET /api/stores` |
-| `src/pages/services/detail/index.tsx` | 固定时间段 | 档期 API |
-| `src/pages/booking/confirm/index.tsx` | 本地创建订单 | `POST /api/bookings` |
-| `src/pages/orders/index.tsx` | 本地更新状态 | 订单 API |
-| `src/pages/negatives/index.tsx` | mock 图片 | 底片 API |
+| `client/src/data/services.ts` | 本地套餐数据 | `GET /api/services` |
+| `client/src/data/bookings.ts` | 本地订单样例 | 删除或仅开发模式保留 |
+| `client/src/store/useAuthStore.ts` | mock 登录 | 登录 API + token |
+| `client/src/store/useBookingStore.ts` | 本地订单真源 | 仅保留临时状态和缓存 |
+| `client/src/pages/services/index.tsx` | 页面内门店常量 | `GET /api/stores` |
+| `client/src/pages/services/detail/index.tsx` | 固定时间段 | 档期 API |
+| `client/src/pages/booking/confirm/index.tsx` | 本地创建订单 | `POST /api/bookings` |
+| `client/src/pages/orders/index.tsx` | 本地更新状态 | 订单 API |
+| `client/src/pages/negatives/index.tsx` | mock 图片 | 底片 API |
 
 ## 6. 联调顺序
 

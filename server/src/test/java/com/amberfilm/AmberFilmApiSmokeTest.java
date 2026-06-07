@@ -37,7 +37,7 @@ class AmberFilmApiSmokeTest {
 
   @Test
   void userBookingOrderAndNegativeFlowWorks() throws Exception {
-    JsonNode login = postJson("/api/auth/phone-login", Map.of("phone", "13800138000", "code", "123456"));
+    JsonNode login = postJson("/api/auth/phone-login", Map.of("phone", "13800138000", "code", "000000"));
     String token = login.path("data").path("token").asText();
     long userId = login.path("data").path("user").path("id").asLong();
 

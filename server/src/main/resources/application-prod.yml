@@ -13,5 +13,15 @@ amber:
     allowed-origin-patterns: ${AMBER_ALLOWED_ORIGIN_PATTERNS}
   auth:
     token-secret: ${AMBER_TOKEN_SECRET}
+    dev-sms-enabled: ${AMBER_AUTH_DEV_SMS_ENABLED:false}
   admin:
     token: ${AMBER_ADMIN_TOKEN}
+  storage:
+    provider: ${AMBER_STORAGE_PROVIDER}
+    bucket: ${AMBER_STORAGE_BUCKET}
+    public-base-url: ${AMBER_STORAGE_PUBLIC_BASE_URL}
+    upload-base-url: ${AMBER_STORAGE_UPLOAD_BASE_URL}
+    signing-secret: ${AMBER_STORAGE_SIGNING_SECRET}
+  payment:
+    dev-callback-enabled: ${AMBER_PAYMENT_DEV_CALLBACK_ENABLED:false}
+    callback-secret: ${AMBER_PAYMENT_CALLBACK_SECRET}

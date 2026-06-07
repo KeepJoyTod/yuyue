@@ -22,6 +22,16 @@ public class AuthController {
     return ApiResponse.ok(authService.phoneLogin(request));
   }
 
+  @PostMapping("/api/auth/sms/send")
+  public ApiResponse<SmsSendResponse> sendSms(@Valid @RequestBody SmsSendRequest request) {
+    return ApiResponse.ok(authService.sendSms(request));
+  }
+
+  @PostMapping("/api/auth/wechat-login")
+  public ApiResponse<LoginResponse> wechatLogin(@Valid @RequestBody WechatLoginRequest request) {
+    return ApiResponse.ok(authService.wechatLogin(request));
+  }
+
   @GetMapping("/api/users/me")
   public ApiResponse<UserDto> me(HttpServletRequest request) {
     return ApiResponse.ok(authService.requireUser(request));
@@ -33,4 +43,3 @@ public class AuthController {
     return ApiResponse.ok(authService.updateRealName(userId, body));
   }
 }
-

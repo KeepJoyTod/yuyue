@@ -23,8 +23,21 @@ amber:
   auth:
     token-secret: ${AMBER_TOKEN_SECRET:dev-secret-change-me}
     token-ttl-seconds: ${AMBER_TOKEN_TTL_SECONDS:604800}
+    dev-sms-enabled: ${AMBER_AUTH_DEV_SMS_ENABLED:true}
+    sms-ttl-seconds: ${AMBER_SMS_TTL_SECONDS:300}
   admin:
     token: ${AMBER_ADMIN_TOKEN:dev-admin-token}
+  storage:
+    provider: ${AMBER_STORAGE_PROVIDER:local}
+    bucket: ${AMBER_STORAGE_BUCKET:amber-film-dev}
+    public-base-url: ${AMBER_STORAGE_PUBLIC_BASE_URL:http://localhost:8080}
+    upload-base-url: ${AMBER_STORAGE_UPLOAD_BASE_URL:http://localhost:8080}
+    signing-secret: ${AMBER_STORAGE_SIGNING_SECRET:${AMBER_TOKEN_SECRET:dev-secret-change-me}}
+    upload-ttl-seconds: ${AMBER_STORAGE_UPLOAD_TTL_SECONDS:900}
+    download-ttl-seconds: ${AMBER_STORAGE_DOWNLOAD_TTL_SECONDS:900}
+  payment:
+    dev-callback-enabled: ${AMBER_PAYMENT_DEV_CALLBACK_ENABLED:true}
+    callback-secret: ${AMBER_PAYMENT_CALLBACK_SECRET:${AMBER_TOKEN_SECRET:dev-secret-change-me}}
 
 logging:
   pattern:

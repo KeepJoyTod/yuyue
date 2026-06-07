@@ -8,6 +8,7 @@ public record CreateAdminNegativeRequest(
     @NotNull Long orderId,
     @NotBlank String title,
     @NotBlank @Pattern(regexp = "^(original|retouched)$", message = "必须是 original 或 retouched") String type,
-    @NotBlank String imageUrl,
+    Long fileId,
+    String imageUrl,
     String status) {
 }

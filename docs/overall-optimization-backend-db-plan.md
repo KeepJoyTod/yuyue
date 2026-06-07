@@ -4,17 +4,17 @@
 
 ### 1.1 已验证事实
 
-- 当前项目是 Taro + React + TypeScript + Sass 前端项目，`package.json` 中配置了 Taro H5、微信小程序、抖音、支付宝等多端构建脚本：`package.json:12`。
-- Taro 相关依赖版本为 `4.1.9`，React 为 `^18.0.0`，状态管理使用 `zustand`：`package.json:40`、`package.json:53`、`package.json:54`。
-- 应用页面包括首页、预约、底片、订单、我的、登录、手机号、验证码、实名、服务详情、预约确认、订单详情、设置、关于：`src/app.config.ts:2`。
-- 应用品牌标题为“琥珀映画”，底部 Tab 包括首页、预约、底片、订单、我的：`src/app.config.ts:21`、`src/app.config.ts:24`。
+- 当前项目是 Taro + React + TypeScript + Sass 前端项目，`client/package.json` 中配置了 Taro H5、微信小程序、抖音、支付宝等多端构建脚本：`client/package.json:12`。
+- Taro 相关依赖版本为 `4.1.9`，React 为 `^18.0.0`，状态管理使用 `zustand`：`client/package.json:40`、`client/package.json:53`、`client/package.json:54`。
+- 应用页面包括首页、预约、底片、订单、我的、登录、手机号、验证码、实名、服务详情、预约确认、订单详情、设置、关于：`client/src/app.config.ts:2`。
+- 应用品牌标题为“琥珀映画”，底部 Tab 包括首页、预约、底片、订单、我的：`client/src/app.config.ts:21`、`client/src/app.config.ts:24`。
 - 前端当前未发现 `Taro.request`、`fetch`、`axios` 等真实后端请求调用；服务、订单、登录状态主要依赖本地数据和本地存储。
-- 服务套餐数据来自本地 `serviceList`：`src/data/services.ts:11`。
-- 初始订单数据来自本地 `initialBookings`：`src/data/bookings.ts:3`。
-- 登录状态使用 Zustand + Taro Storage 持久化：`src/store/useAuthStore.ts:48`。
-- 预约订单使用 Zustand + Taro Storage 持久化：`src/store/useBookingStore.ts:75`。
-- 预约确认页当前直接调用本地 `createBooking` 创建订单：`src/pages/booking/confirm/index.tsx:112`。
-- 订单页当前通过本地 `updateStatus` 和 `removeBooking` 修改订单：`src/pages/orders/index.tsx:176`、`src/pages/orders/index.tsx:201`、`src/pages/orders/index.tsx:211`。
+- 服务套餐数据来自本地 `serviceList`：`client/src/data/services.ts:11`。
+- 初始订单数据来自本地 `initialBookings`：`client/src/data/bookings.ts:3`。
+- 登录状态使用 Zustand + Taro Storage 持久化：`client/src/store/useAuthStore.ts:48`。
+- 预约订单使用 Zustand + Taro Storage 持久化：`client/src/store/useBookingStore.ts:75`。
+- 预约确认页当前直接调用本地 `createBooking` 创建订单：`client/src/pages/booking/confirm/index.tsx:112`。
+- 订单页当前通过本地 `updateStatus` 和 `removeBooking` 修改订单：`client/src/pages/orders/index.tsx:176`、`client/src/pages/orders/index.tsx:201`、`client/src/pages/orders/index.tsx:211`。
 
 ### 1.2 主要问题
 
@@ -95,9 +95,9 @@ flowchart TD
 
 优化方向：
 
-- 新增统一请求层 `src/api`，封装 `Taro.request`、baseURL、token、错误处理。
-- 新增接口类型 `src/types/api.ts`，避免页面直接依赖后端裸结构。
-- 将 `src/data/services.ts`、`src/data/bookings.ts` 从默认数据源降级为开发兜底或删除。
+- 新增统一请求层 `client/src/api`，封装 `Taro.request`、baseURL、token、错误处理。
+- 新增接口类型 `client/src/types/api.ts`，避免页面直接依赖后端裸结构。
+- 将 `client/src/data/services.ts`、`client/src/data/bookings.ts` 从默认数据源降级为开发兜底或删除。
 - Zustand 保留为前端状态缓存，但订单、用户、服务等以服务端数据为准。
 - 页面内写死的门店、活动、作品和底片数据迁移到 API。
 
@@ -375,7 +375,7 @@ completed -> refunded
 建议新增：
 
 ```text
-src/api/
+client/src/api/
   request.ts
   auth.ts
   services.ts
@@ -383,7 +383,7 @@ src/api/
   schedules.ts
   orders.ts
   negatives.ts
-src/types/api.ts
+client/src/types/api.ts
 ```
 
 `request.ts` 职责：
@@ -480,12 +480,12 @@ src/types/api.ts
 
 - 实现分类、服务套餐、门店、档期查询接口。
 - 编写初始化种子数据，迁移当前 `serviceList` 中的摄影套餐。
-- 前端新增 `src/api` 请求层。
+- 前端新增 `client/src/api` 请求层。
 - 替换服务列表、详情、门店、档期页面的数据源。
 
 验收：
 
-- 服务列表页不再依赖 `src/data/services.ts`。
+- 服务列表页不再依赖 `client/src/data/services.ts`。
 - 服务详情页刷新后能从 API 获取数据。
 - 门店和档期来自数据库。
 
@@ -586,8 +586,8 @@ src/types/api.ts
 
 ### 前端
 
-- `src/api` 请求层。
-- `src/types/api.ts` 接口类型。
+- `client/src/api` 请求层。
+- `client/src/types/api.ts` 接口类型。
 - 替换本地 mock 数据的数据接入改造。
 - 登录态与 token 管理。
 - API 错误态、加载态、空态优化。

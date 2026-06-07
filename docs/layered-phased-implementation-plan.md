@@ -33,7 +33,7 @@
 
 核心任务：
 
-- 新增 `src/api` 请求层，统一 baseURL、token、错误处理、loading 和 401 跳转。
+- 新增 `client/src/api` 请求层，统一 baseURL、token、错误处理、loading 和 401 跳转。
 - 新增 API 类型定义，降低页面对后端字段的直接耦合。
 - 替换服务、门店、档期、订单、用户、底片的数据来源。
 - 补齐接口加载态、空态、错误态、重试入口。
@@ -145,9 +145,9 @@
 
 实施步骤：
 
-1. 新增 `src/api/request.ts`。
+1. 新增 `client/src/api/request.ts`。
 2. 配置开发环境 API 地址，例如 `http://localhost:8080`。
-3. 新增 `src/api/services.ts`、`src/api/stores.ts`。
+3. 新增 `client/src/api/services.ts`、`client/src/api/stores.ts`。
 4. 新增接口 DTO 类型，完成后端字段到前端领域模型的适配。
 5. 替换服务列表页的数据源。
 6. 替换服务详情页的数据源。
@@ -168,7 +168,7 @@
 
 验收标准：
 
-- 停用 `src/data/services.ts` 作为页面主数据源。
+- 停用 `client/src/data/services.ts` 作为页面主数据源。
 - 服务列表和详情刷新后仍能展示。
 - 后端服务停止时，前端能给出可理解的错误提示。
 
@@ -178,7 +178,7 @@
 
 实施步骤：
 
-1. 前端新增 `src/api/auth.ts`。
+1. 前端新增 `client/src/api/auth.ts`。
 2. 调用 `POST /api/auth/phone-login` 完成手机号登录。
 3. 将 token 存入 Taro Storage。
 4. 请求层自动注入 `Authorization`。
@@ -212,7 +212,7 @@
 
 实施步骤：
 
-1. 前端新增 `src/api/orders.ts`。
+1. 前端新增 `client/src/api/orders.ts`。
 2. 预约确认页调用 `POST /api/bookings`。
 3. 订单列表页调用 `GET /api/orders`。
 4. 订单详情页调用 `GET /api/orders/{id}`。
@@ -220,7 +220,7 @@
 6. 取消按钮调用 `POST /api/orders/{id}/cancel`。
 7. 完成/核销按钮调用 `POST /api/orders/{id}/complete`。
 8. 删除按钮调用 `DELETE /api/orders/{id}`。
-9. 移除 `src/data/bookings.ts` 对页面的默认注入。
+9. 移除 `client/src/data/bookings.ts` 对页面的默认注入。
 
 核心重点：
 
@@ -251,7 +251,7 @@
 1. 后端新增文件上传凭证接口。
 2. 接入 MinIO、腾讯云 COS 或阿里云 OSS。
 3. 建立底片上传和订单绑定能力。
-4. 前端新增 `src/api/negatives.ts`。
+4. 前端新增 `client/src/api/negatives.ts`。
 5. 底片页调用 `GET /api/negatives`。
 6. 下载或预览链接使用短期签名 URL。
 7. 增加底片权限校验，用户只能访问自己的底片。

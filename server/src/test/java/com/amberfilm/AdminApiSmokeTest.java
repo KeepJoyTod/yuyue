@@ -45,7 +45,7 @@ class AdminApiSmokeTest {
 
   @Test
   void adminReadApisReturnOperationalData() throws Exception {
-    JsonNode login = postJson("/api/auth/phone-login", Map.of("phone", "13900139000", "code", "123456"));
+    JsonNode login = postJson("/api/auth/phone-login", Map.of("phone", "13900139000", "code", "000000"));
     String token = login.path("data").path("token").asText();
     long userId = login.path("data").path("user").path("id").asLong();
 
@@ -54,7 +54,7 @@ class AdminApiSmokeTest {
         "contentType", "image/jpeg",
         "sizeByte", 1024,
         "usage", "negative"));
-    String assetUrl = uploadToken.path("data").path("assetUrl").asText();
+    String fileId = uploadToken.path("data").path("fileId").asText();
     assertThat(uploadToken.path("data").path("objectKey").asText()).contains("uploads/users/" + userId);
 
     JsonNode booking = postJsonWithToken("/api/bookings", token, Map.of(
@@ -69,7 +69,7 @@ class AdminApiSmokeTest {
         "orderId", Long.parseLong(orderId),
         "title", "琥珀 · 精修底片",
         "type", "retouched",
-        "imageUrl", assetUrl,
+        "fileId", Long.parseLong(fileId),
         "status", "visible"));
     String negativeId = negative.path("data").path("id").asText();
 
@@ -105,12 +105,14 @@ class AdminApiSmokeTest {
     mockMvc.perform(adminGet("/api/admin/negatives?userId=" + userId + "&orderId=" + orderId))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data[0].orderId").value(orderId))
-        .andExpect(jsonPath("$.data[0].imageUrl").value(assetUrl));
+        .andExpect(jsonPath("$.data[0].fileId").value(fileId))
+        .andExpect(jsonPath("$.data[0].downloadUrl").exists());
 
     mockMvc.perform(get("/api/negatives").header("Authorization", "Bearer " + token))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data[0].id").value(negativeId))
-        .andExpect(jsonPath("$.data[0].imageUrl").value(assetUrl));
+        .andExpect(jsonPath("$.data[0].fileId").value(fileId))
+        .andExpect(jsonPath("$.data[0].downloadUrl").exists());
 
     mockMvc.perform(adminGet("/api/admin/audit-logs?action=NEGATIVE_CREATE&targetType=negative&targetId=" + negativeId))
         .andExpect(status().isOk())
