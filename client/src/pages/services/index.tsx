@@ -15,6 +15,7 @@ const BookingPage: React.FC = () => {
   const [keyword, setKeyword] = useState('');
   const [storeKeyword, setStoreKeyword] = useState('');
   const [storeTag, setStoreTag] = useState<'all' | '婚纱' | '写真' | '儿童'>('all');
+  const [preferNearby, setPreferNearby] = useState(false);
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [stores, setStores] = useState<StoreItem[]>([]);
@@ -90,12 +91,14 @@ const BookingPage: React.FC = () => {
 
   const filteredStores = useMemo(() => {
     const kw = storeKeyword.trim().toLowerCase();
-    return stores.filter((s) => {
+    const result = stores.filter((s) => {
       if (storeTag !== 'all' && !s.tags.includes(storeTag)) return false;
       if (!kw) return true;
       return `${s.name} ${s.address}`.toLowerCase().includes(kw);
     });
-  }, [storeKeyword, storeTag, stores]);
+    if (!preferNearby) return result;
+    return [...result].sort((a, b) => a.distanceKm - b.distanceKm);
+  }, [preferNearby, storeKeyword, storeTag, stores]);
 
   if (mode === 'stores') {
     return (
@@ -115,7 +118,8 @@ const BookingPage: React.FC = () => {
           <View
             className={styles.nearbyBtn}
             onClick={() => {
-              Taro.showToast({ title: '附近（演示）', icon: 'none' }).catch((err) =>
+              setPreferNearby(true);
+              Taro.showToast({ title: '已按距离排序', icon: 'none' }).catch((err) =>
                 console.error('[Toast] showToast error', err)
               );
             }}
@@ -245,7 +249,8 @@ const BookingPage: React.FC = () => {
         <View
           className={styles.sectionMore}
           onClick={() => {
-            Taro.showToast({ title: '全部套系（待接入）', icon: 'none' }).catch((err) =>
+            setKeyword('');
+            Taro.showToast({ title: '已显示全部套系', icon: 'none' }).catch((err) =>
               console.error('[Toast] showToast error', err)
             );
           }}

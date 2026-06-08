@@ -1,6 +1,37 @@
 # Amber Film Appointment
 
-前后端分离项目结构：
+## 快速开始
+
+### 一键启动（推荐）
+
+在项目根目录双击运行：
+
+```batch
+start.bat
+```
+
+脚本会自动：
+1. 检查 Java、Node、Maven 环境
+2. 启动后端服务（端口 8080）
+3. 启动前端服务（端口 10086）
+
+### 一键停止
+
+在项目根目录双击运行：
+
+```batch
+stop.bat
+```
+
+### 服务地址
+
+- 📍 前端页面：http://localhost:10086
+- 📍 后端 API：http://localhost:8080
+- 📍 H2 控制台：http://localhost:8080/h2-console
+
+---
+
+## 项目结构
 
 ```text
 yuyue/
@@ -36,16 +67,38 @@ yuyue/
   docs/                   # 方案、接口、运行和生产化文档
   .github/workflows/      # CI
   docker-compose.yml      # 本地 MySQL/Redis/MinIO
+  start.bat              # 一键启动脚本
+  stop.bat               # 一键停止脚本
 ```
 
-常用命令：
+---
+
+## 手动启动
+
+### 前端
 
 ```powershell
-cd D:\Java\class\projectKu\sure\yuyue\client
+cd client
+npm install
+npm run dev:h5
+```
+
+### 后端
+
+```powershell
+cd server
+mvn spring-boot:run
+```
+
+### 常用命令
+
+```powershell
+cd client
 npm run build:h5
 ```
 
 ```powershell
-cd D:\Java\class\projectKu\sure\yuyue\server
+cd server
 mvn test
 ```
+

@@ -33,6 +33,14 @@
 /client/coverage/
 /client/.nyc_output/
 
+# ========== Admin: Vue/Vite CMS frontend ==========
+/admin/node_modules/
+/admin/dist/
+/admin/.vite/
+/admin/.env
+/admin/.env.local
+/admin/.env.*.local
+
 # ========== Backend: Java/Maven/Spring Boot (server/) ==========
 /server/target/
 /server/data/

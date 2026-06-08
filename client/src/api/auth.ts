@@ -1,6 +1,7 @@
 import { request } from '@/api/request';
-import type { LoginResponseDto, UserDto } from '@/types/api';
+import type { LoginResponseDto, SmsSendResponseDto, UserDto, UserSummaryDto } from '@/types/api';
 import type { AuthUser } from '@/store/useAuthStore';
+import type { MemberSummary } from '@/types/domain';
 
 const toAuthUser = (dto: UserDto): AuthUser => ({
   id: String(dto.id),
@@ -21,6 +22,13 @@ export async function loginByPhone(phone: string, code: string) {
   };
 }
 
+export async function sendLoginSms(phone: string) {
+  return request<SmsSendResponseDto>('/api/auth/sms/send', {
+    method: 'POST',
+    data: { phone, scene: 'login' }
+  });
+}
+
 export async function fetchCurrentUser() {
   const user = await request<UserDto>('/api/users/me');
   return toAuthUser(user);
@@ -32,4 +40,8 @@ export async function updateRealName(realName: string) {
     data: { realName }
   });
   return toAuthUser(user);
+}
+
+export async function fetchMemberSummary(): Promise<MemberSummary> {
+  return request<UserSummaryDto>('/api/users/me/summary');
 }

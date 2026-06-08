@@ -1,7 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, Input, Swiper, SwiperItem, Image } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import styles from './index.module.scss';
+import { fetchServiceCategories, fetchServices } from '@/api/services';
+import type { ServiceCategory, ServiceCategoryId, ServiceItem } from '@/types/domain';
 
 interface HomeBanner {
   id: string;
@@ -24,64 +26,90 @@ interface HomeWork {
   likeCount: number;
 }
 
+const categoryIcons: Partial<Record<ServiceCategoryId, string>> = {
+  wedding: '💍',
+  portrait: '👗',
+  kids: '🧸',
+  business: '🧑‍💼',
+  family: '👨‍👩‍👧‍👦'
+};
+
 const HomePage: React.FC = () => {
   const [keyword, setKeyword] = useState('');
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  const [services, setServices] = useState<ServiceItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const banners = useMemo<HomeBanner[]>(
-    () => [
-      {
-        id: 'bn_001',
-        coverUrl: 'https://picsum.photos/id/338/750/400',
-        badge: '限时特惠',
-        title: '新人专属礼包',
-        subTitle: '首次预约立减 200 元'
-      },
-      {
-        id: 'bn_002',
-        coverUrl: 'https://picsum.photos/id/177/750/400',
-        badge: '热门套系',
-        title: '梦境 · 白纱系列',
-        subTitle: '档期充足，支持分期'
-      }
-    ],
-    []
-  );
+  useEffect(() => {
+    let alive = true;
 
-  const entryList = useMemo<HomeEntry[]>(
-    () => [
-      { id: 'e_001', icon: '💍', text: '婚纱摄影' },
-      { id: 'e_002', icon: '👗', text: '写真套系' },
-      { id: 'e_003', icon: '🧸', text: '儿童摄影' },
-      { id: 'e_004', icon: '🎓', text: '毕业照' },
-      { id: 'e_005', icon: '🧑‍💼', text: '商务形象' },
-      { id: 'e_006', icon: '👨‍👩‍👧‍👦', text: '全家福' },
-      { id: 'e_007', icon: '🌸', text: '孕期纪念' },
-      { id: 'e_008', icon: '✨', text: '更多' }
-    ],
-    []
-  );
+    setLoading(true);
+    setError('');
+    Promise.all([fetchServiceCategories(), fetchServices()])
+      .then(([nextCategories, nextServices]) => {
+        if (!alive) return;
+        setCategories(nextCategories);
+        setServices(nextServices);
+      })
+      .catch((err) => {
+        if (!alive) return;
+        console.error('[Home] load catalog error', err);
+        setError('首页数据加载失败，请稍后重试');
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const banners = useMemo<HomeBanner[]>(() => {
+    return services.slice(0, 3).map((service, index) => ({
+      id: service.id,
+      coverUrl: service.coverUrl,
+      badge: index === 0 ? '热门套系' : service.categoryName ?? '推荐套系',
+      title: service.name,
+      subTitle: `${service.desc} · ¥${service.price}`
+    }));
+  }, [services]);
+
+  const entryList = useMemo<HomeEntry[]>(() => {
+    return categories.slice(0, 8).map((category) => ({
+      id: category.id,
+      icon: categoryIcons[category.id] ?? '✨',
+      text: category.name
+    }));
+  }, [categories]);
 
   const activityList = useMemo<HomeEntry[]>(
     () => [
-      { id: 'a_001', icon: '🎫', text: '优惠券\n3张可用' },
-      { id: 'a_002', icon: '⚡', text: '限时秒杀\n10:00开始' },
-      { id: 'a_003', icon: '👥', text: '拼团优惠\n2人成团' },
-      { id: 'a_004', icon: '🪓', text: '预约活动\n邀好友砍价' }
+      { id: 'a_001', icon: '📷', text: `在售套系\n${services.length} 个` },
+      { id: 'a_002', icon: '🏷️', text: `服务分类\n${categories.length} 类` },
+      { id: 'a_003', icon: '📅', text: '可约档期\n实时查询' },
+      { id: 'a_004', icon: '📍', text: '到店门店\n在线选择' }
     ],
-    []
+    [categories.length, services.length]
   );
 
-  const works = useMemo<HomeWork[]>(
-    () => [
-      { id: 'w_001', coverUrl: 'https://picsum.photos/id/1027/750/500', tag: '写真', likeCount: 2341 },
-      { id: 'w_002', coverUrl: 'https://picsum.photos/id/91/750/500', tag: '婚纱', likeCount: 1876 },
-      { id: 'w_003', coverUrl: 'https://picsum.photos/id/64/750/500', tag: '写真', likeCount: 1543 },
-      { id: 'w_004', coverUrl: 'https://picsum.photos/id/338/750/500', tag: '艺术', likeCount: 2108 },
-      { id: 'w_005', coverUrl: 'https://picsum.photos/id/177/750/500', tag: '商务', likeCount: 987 },
-      { id: 'w_006', coverUrl: 'https://picsum.photos/id/1025/750/500', tag: '亲子', likeCount: 3012 }
-    ],
-    []
-  );
+  const works = useMemo<HomeWork[]>(() => {
+    return services.slice(0, 6).map((service) => ({
+      id: service.id,
+      coverUrl: service.coverUrl,
+      tag: service.categoryName ?? service.name,
+      likeCount: Math.round((service.rating ?? 4.8) * 100)
+    }));
+  }, [services]);
+
+  const catalogSummary = useMemo(() => {
+    return `当前在售 ${services.length} 个套系 · 覆盖 ${categories.length} 类服务`;
+  }, [categories.length, services.length]);
+
+  const goServices = () => {
+    Taro.switchTab({ url: '/pages/services/index' }).catch((err) => console.error('[Nav] switchTab services error', err));
+  };
 
   return (
     <View className={styles.container}>
@@ -119,39 +147,44 @@ const HomePage: React.FC = () => {
           value={keyword}
           onInput={(e) => setKeyword(e.detail.value)}
           confirmType='search'
+          onConfirm={goServices}
         />
       </View>
 
       <View className={styles.bannerWrap}>
-        <Swiper className={styles.bannerSwiper} circular autoplay>
-          {banners.map((b) => (
-            <SwiperItem key={b.id}>
-              <View
-                className={styles.bannerItem}
-                onClick={() => {
-                  Taro.showToast({ title: b.title, icon: 'none' }).catch((err) =>
-                    console.error('[Toast] showToast error', err)
-                  );
-                }}
-              >
-                <Image
-                  className={styles.bannerImg}
-                  src={b.coverUrl}
-                  mode='aspectFill'
-                  onError={(err) => console.error('[Image] banner error', { id: b.id, err })}
-                />
-                <View className={styles.bannerMask} />
-                <View className={styles.bannerContent}>
-                  <View className={styles.bannerBadge}>
-                    <Text className={styles.bannerBadgeText}>{b.badge}</Text>
+        {loading && <Text className={styles.empty}>首页数据加载中...</Text>}
+        {!loading && error && <Text className={styles.empty}>{error}</Text>}
+        {!loading && !error && banners.length > 0 && (
+          <Swiper className={styles.bannerSwiper} circular autoplay>
+            {banners.map((b) => (
+              <SwiperItem key={b.id}>
+                <View
+                  className={styles.bannerItem}
+                  onClick={() => {
+                    Taro.navigateTo({ url: `/pages/services/detail/index?serviceId=${b.id}` }).catch((err) =>
+                      console.error('[Nav] navigateTo detail error', err)
+                    );
+                  }}
+                >
+                  <Image
+                    className={styles.bannerImg}
+                    src={b.coverUrl}
+                    mode='aspectFill'
+                    onError={(err) => console.error('[Image] banner error', { id: b.id, err })}
+                  />
+                  <View className={styles.bannerMask} />
+                  <View className={styles.bannerContent}>
+                    <View className={styles.bannerBadge}>
+                      <Text className={styles.bannerBadgeText}>{b.badge}</Text>
+                    </View>
+                    <Text className={styles.bannerTitle}>{b.title}</Text>
+                    <Text className={styles.bannerSub}>{b.subTitle}</Text>
                   </View>
-                  <Text className={styles.bannerTitle}>{b.title}</Text>
-                  <Text className={styles.bannerSub}>{b.subTitle}</Text>
                 </View>
-              </View>
-            </SwiperItem>
-          ))}
-        </Swiper>
+              </SwiperItem>
+            ))}
+          </Swiper>
+        )}
       </View>
 
       <View className={styles.entryGrid}>
@@ -159,11 +192,7 @@ const HomePage: React.FC = () => {
           <View
             key={it.id}
             className={styles.entryItem}
-            onClick={() => {
-              Taro.switchTab({ url: '/pages/services/index' }).catch((err) =>
-                console.error('[Nav] switchTab booking error', err)
-              );
-            }}
+            onClick={goServices}
           >
             <View className={styles.entryIcon}>
               <Text className={styles.entryIconText}>{it.icon}</Text>
@@ -178,9 +207,7 @@ const HomePage: React.FC = () => {
         <View
           className={styles.sectionMore}
           onClick={() => {
-            Taro.showToast({ title: '查看全部（待接入）', icon: 'none' }).catch((err) =>
-              console.error('[Toast] showToast error', err)
-            );
+            goServices();
           }}
         >
           <Text className={styles.sectionMoreText}>查看全部</Text>
@@ -193,11 +220,7 @@ const HomePage: React.FC = () => {
           <View
             key={it.id}
             className={styles.activityItem}
-            onClick={() => {
-              Taro.showToast({ title: '活动（待接入）', icon: 'none' }).catch((err) =>
-                console.error('[Toast] showToast error', err)
-              );
-            }}
+            onClick={goServices}
           >
             <View className={styles.activityIcon}>
               <Text className={styles.activityIconText}>{it.icon}</Text>
@@ -213,19 +236,17 @@ const HomePage: React.FC = () => {
             <Text className={styles.giftIconText}>🎁</Text>
           </View>
           <View className={styles.giftInfo}>
-            <Text className={styles.giftTitle}>新人礼包</Text>
-            <Text className={styles.giftDesc}>注册即得 3 张优惠券 + 200 积分</Text>
+            <Text className={styles.giftTitle}>预约服务</Text>
+            <Text className={styles.giftDesc}>{catalogSummary}</Text>
           </View>
         </View>
         <View
           className={styles.giftBtn}
           onClick={() => {
-            Taro.showToast({ title: '领取成功（演示）', icon: 'success' }).catch((err) =>
-              console.error('[Toast] showToast error', err)
-            );
+            goServices();
           }}
         >
-          <Text className={styles.giftBtnText}>立即领取</Text>
+          <Text className={styles.giftBtnText}>去预约</Text>
         </View>
       </View>
 
@@ -234,9 +255,7 @@ const HomePage: React.FC = () => {
         <View
           className={styles.sectionMore}
           onClick={() => {
-            Taro.showToast({ title: '更多作品（待接入）', icon: 'none' }).catch((err) =>
-              console.error('[Toast] showToast error', err)
-            );
+            goServices();
           }}
         >
           <Text className={styles.sectionMoreText}>更多作品</Text>
@@ -250,8 +269,8 @@ const HomePage: React.FC = () => {
             key={w.id}
             className={styles.workItem}
             onClick={() => {
-              Taro.showToast({ title: '作品详情（待接入）', icon: 'none' }).catch((err) =>
-                console.error('[Toast] showToast error', err)
+              Taro.navigateTo({ url: `/pages/services/detail/index?serviceId=${w.id}` }).catch((err) =>
+                console.error('[Nav] navigateTo detail error', err)
               );
             }}
           >

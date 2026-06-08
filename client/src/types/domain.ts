@@ -65,3 +65,16 @@ export interface BookingItem {
   payStatus?: string;
   createdAt: string;
 }
+
+export interface MemberSummary {
+  levelName: string;
+  nextLevelName: string;
+  growth: number;
+  nextNeed: number;
+  couponCount: number;
+  pointBalance: number;
+  balanceCent: number;
+  cardCount: number;
+  orderCount: number;
+  completedOrderCount: number;
+}

@@ -32,14 +32,14 @@ export async function fetchNegativeSessions(): Promise<NegativeSession[]> {
 
     return {
       id: orderId,
-      coverUrl: first?.imageUrl ?? '',
+      coverUrl: first?.downloadUrl || first?.imageUrl || '',
       name: first?.title ?? '摄影底片',
       shootDate: first?.createdAt?.slice(0, 10) ?? '',
       totalCount,
       selectedCount: retouchedCount,
       refinedCount,
       status: retouchedCount > 0 ? 'completed' : 'pendingSelect',
-      photos: sorted.map((item) => ({ id: item.id, src: item.imageUrl }))
+      photos: sorted.map((item) => ({ id: item.id, src: item.downloadUrl || item.imageUrl }))
     };
   });
 }

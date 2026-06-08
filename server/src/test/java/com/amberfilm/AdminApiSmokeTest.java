@@ -41,6 +41,10 @@ class AdminApiSmokeTest {
         .andExpect(status().isUnauthorized())
         .andExpect(header().string("X-Trace-Id", "trace-admin-auth"))
         .andExpect(jsonPath("$.code").value("ADMIN_AUTH_REQUIRED"));
+
+    mockMvc.perform(get("/api/admin/users/1/assets"))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code").value("ADMIN_AUTH_REQUIRED"));
   }
 
   @Test
@@ -64,6 +68,72 @@ class AdminApiSmokeTest {
         "contactName", "李同学",
         "contactPhone", "13900139000"));
     String orderId = booking.path("data").path("id").asText();
+
+    mockMvc.perform(adminGet("/api/admin/users/" + userId + "/assets"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.summary.couponCount").value(0))
+        .andExpect(jsonPath("$.data.summary.pointBalance").value(0))
+        .andExpect(jsonPath("$.data.summary.balanceCent").value(0))
+        .andExpect(jsonPath("$.data.summary.cardCount").value(0));
+
+    JsonNode coupon = postJsonWithAdmin("/api/admin/users/" + userId + "/coupons", Map.of(
+        "title", "测试优惠券",
+        "amountCent", 5000,
+        "thresholdCent", 10000,
+        "expiresAt", "2026-12-31T23:59:59",
+        "reason", "smoke"));
+    String couponId = coupon.path("data").path("id").asText();
+
+    postJsonWithAdmin("/api/admin/users/" + userId + "/points/adjust", Map.of(
+        "deltaPoints", 120,
+        "reason", "smoke"));
+    postJsonWithAdmin("/api/admin/users/" + userId + "/wallet/adjust", Map.of(
+        "deltaCent", 3000,
+        "reason", "smoke"));
+    JsonNode card = postJsonWithAdmin("/api/admin/users/" + userId + "/cards", Map.of(
+        "title", "测试次卡",
+        "totalTimes", 3,
+        "expiresAt", "2026-12-31T23:59:59",
+        "reason", "smoke"));
+    String cardId = card.path("data").path("id").asText();
+
+    mockMvc.perform(get("/api/users/me/summary").header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.couponCount").value(1))
+        .andExpect(jsonPath("$.data.pointBalance").value(120))
+        .andExpect(jsonPath("$.data.balanceCent").value(3000))
+        .andExpect(jsonPath("$.data.cardCount").value(1));
+
+    mockMvc.perform(get("/api/users/me/coupons").header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data[0].id").value(couponId))
+        .andExpect(jsonPath("$.data[0].status").value("available"));
+
+    mockMvc.perform(get("/api/users/me/cards").header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data[0].id").value(cardId))
+        .andExpect(jsonPath("$.data[0].remainingTimes").value(3));
+
+    mockMvc.perform(get("/api/users/me/points/transactions").header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data[0].type").value("admin_adjust"))
+        .andExpect(jsonPath("$.data[0].balanceAfter").value(120));
+
+    mockMvc.perform(get("/api/users/me/wallet/transactions").header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data[0].type").value("admin_adjust"))
+        .andExpect(jsonPath("$.data[0].balanceAfterCent").value(3000));
+
+    postJsonWithAdmin("/api/admin/cards/" + cardId + "/adjust-times", Map.of(
+        "deltaTimes", -1,
+        "reason", "smoke"));
+    postJsonWithAdmin("/api/admin/coupons/" + couponId + "/void", Map.of("reason", "smoke"));
+    postJsonWithAdmin("/api/admin/cards/" + cardId + "/void", Map.of("reason", "smoke"));
+
+    mockMvc.perform(get("/api/users/me/summary").header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.couponCount").value(0))
+        .andExpect(jsonPath("$.data.cardCount").value(0));
 
     JsonNode negative = postJsonWithAdmin("/api/admin/negatives", Map.of(
         "orderId", Long.parseLong(orderId),
@@ -119,6 +189,10 @@ class AdminApiSmokeTest {
         .andExpect(jsonPath("$.data[0].action").value("NEGATIVE_CREATE"))
         .andExpect(jsonPath("$.data[0].targetType").value("negative"))
         .andExpect(jsonPath("$.data[0].targetId").value(negativeId));
+
+    mockMvc.perform(adminGet("/api/admin/audit-logs?action=POINT_ADJUST&targetType=user&targetId=" + userId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data[0].action").value("POINT_ADJUST"));
   }
 
   private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder adminGet(String path) {

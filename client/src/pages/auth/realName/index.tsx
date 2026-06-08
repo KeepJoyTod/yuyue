@@ -77,7 +77,7 @@ const RealNamePage: React.FC = () => {
       </View>
 
       <Text className={styles.title}>完善资料</Text>
-      <Text className={styles.subtitle}>新用户注册，完成后立即获得 200 积分</Text>
+      <Text className={styles.subtitle}>姓名将用于预约确认与订单联系</Text>
 
       <Text className={styles.label}>您的姓名</Text>
       <Input

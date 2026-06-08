@@ -239,6 +239,13 @@
   white-space: nowrap;
 }
 
+.summaryHint {
+  margin-top: $spacing-xs;
+  font-size: $font-size-xs;
+  color: $color-error;
+  line-height: $line-height-normal;
+}
+
 .userArrow {
   font-size: 32rpx;
   color: $color-text-tertiary;

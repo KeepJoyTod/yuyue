@@ -28,6 +28,16 @@ const storage = {
     try {
       const value = Taro.getStorageSync(name);
       if (typeof value !== 'string') return null;
+      if (!value.trim()) {
+        Taro.removeStorageSync(name);
+        return null;
+      }
+      try {
+        JSON.parse(value);
+      } catch {
+        Taro.removeStorageSync(name);
+        return null;
+      }
       return value;
     } catch (err) {
       console.error('[Storage] getItem error', err);

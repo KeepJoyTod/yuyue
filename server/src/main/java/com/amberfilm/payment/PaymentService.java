@@ -1,6 +1,7 @@
 package com.amberfilm.payment;
 
 import com.amberfilm.common.ApiException;
+import com.amberfilm.member.MemberAssetService;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Base64;
@@ -17,14 +18,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class PaymentService {
   private final JdbcTemplate jdbcTemplate;
+  private final MemberAssetService memberAssetService;
   private final boolean devCallbackEnabled;
   private final String callbackSecret;
 
   public PaymentService(
       JdbcTemplate jdbcTemplate,
+      MemberAssetService memberAssetService,
       @Value("${amber.payment.dev-callback-enabled:true}") boolean devCallbackEnabled,
       @Value("${amber.payment.callback-secret:${amber.auth.token-secret}}") String callbackSecret) {
     this.jdbcTemplate = jdbcTemplate;
+    this.memberAssetService = memberAssetService;
     this.devCallbackEnabled = devCallbackEnabled;
     this.callbackSecret = callbackSecret;
   }
@@ -55,13 +59,18 @@ public class PaymentService {
           INSERT INTO payments(order_id, channel, amount_cent, status, transaction_no, paid_at)
           VALUES (?, 'wechat', ?, 'success', ?, CURRENT_TIMESTAMP)
           """, orderId, request.amountCent(), request.transactionNo());
+      memberAssetService.grantPaidOrderPoints(
+          orderId,
+          ((Number) order.get("user_id")).longValue(),
+          request.amountCent(),
+          "wechat");
     }
     return new PaymentCallbackDto(String.valueOf(orderId), request.orderNo(), "confirmed", false);
   }
 
   private Map<String, Object> requireOrderByNo(String orderNo) {
     List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
-        SELECT id, order_no, price_cent, status, pay_status
+        SELECT id, order_no, user_id, price_cent, status, pay_status
         FROM orders
         WHERE order_no = ?
         FOR UPDATE

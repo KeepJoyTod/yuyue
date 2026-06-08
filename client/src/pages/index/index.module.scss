@@ -127,6 +127,15 @@
   margin-top: $spacing-lg;
 }
 
+.empty {
+  width: 100%;
+  max-width: $max-content-width;
+  padding: $spacing-xl 0;
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+  text-align: center;
+}
+
 .bannerSwiper {
   width: 100%;
   height: 360rpx;

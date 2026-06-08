@@ -1,6 +1,7 @@
 package com.amberfilm.order;
 
 import com.amberfilm.common.ApiException;
+import com.amberfilm.member.MemberAssetService;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.ZoneOffset;
@@ -15,9 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class OrderService {
   private final JdbcTemplate jdbcTemplate;
+  private final MemberAssetService memberAssetService;
 
-  public OrderService(JdbcTemplate jdbcTemplate) {
+  public OrderService(JdbcTemplate jdbcTemplate, MemberAssetService memberAssetService) {
     this.jdbcTemplate = jdbcTemplate;
+    this.memberAssetService = memberAssetService;
   }
 
   public List<OrderDto> list(long userId, String status) {
@@ -58,6 +61,7 @@ public class OrderService {
         INSERT INTO payments(order_id, channel, amount_cent, status, transaction_no, paid_at)
         VALUES (?, 'mock', ?, 'success', ?, CURRENT_TIMESTAMP)
         """, orderId, ((Number) order.get("price_cent")).intValue(), "MOCK" + order.get("order_no"));
+    memberAssetService.grantPaidOrderPoints(orderId, userId, ((Number) order.get("price_cent")).intValue(), "mock");
     return detail(userId, orderId);
   }
 
@@ -82,6 +86,9 @@ public class OrderService {
             updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
         """, ((Number) order.get("schedule_id")).longValue());
+    if ("paid".equals(order.get("pay_status"))) {
+      memberAssetService.reversePaidOrderPoints(orderId, userId, ((Number) order.get("price_cent")).intValue(), "order_cancel");
+    }
     return detail(userId, orderId);
   }
 
@@ -165,4 +172,3 @@ public class OrderService {
         createdAt);
   }
 }
-

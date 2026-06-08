@@ -13,6 +13,7 @@ import com.amberfilm.admin.AdminDtos.UpsertServiceRequest;
 import com.amberfilm.admin.AdminDtos.UpsertStoreRequest;
 import com.amberfilm.common.ApiException;
 import com.amberfilm.file.FileService;
+import com.amberfilm.member.MemberAssetService;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -34,10 +35,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminService {
   private final JdbcTemplate jdbcTemplate;
   private final FileService fileService;
+  private final MemberAssetService memberAssetService;
 
-  public AdminService(JdbcTemplate jdbcTemplate, FileService fileService) {
+  public AdminService(JdbcTemplate jdbcTemplate, FileService fileService, MemberAssetService memberAssetService) {
     this.jdbcTemplate = jdbcTemplate;
     this.fileService = fileService;
+    this.memberAssetService = memberAssetService;
   }
 
   public AdminSummaryDto summary() {
@@ -280,7 +283,8 @@ public class AdminService {
 
   @Transactional
   public AdminOrderDto updateOrder(String adminTokenDigest, long id, UpdateOrderRequest request) {
-    requireExists("SELECT COUNT(*) FROM orders WHERE id = ?", id, "订单不存在");
+    Map<String, Object> order = requireOrderForUpdate(id);
+    String oldPayStatus = (String) order.get("pay_status");
     String status = request.status() == null ? null : normalizeOrderStatus(request.status());
     String payStatus = request.payStatus() == null ? null : normalizePayStatus(request.payStatus());
     jdbcTemplate.update("""
@@ -298,6 +302,15 @@ public class AdminService {
         id,
         "{\"id\":%d,\"status\":%s,\"payStatus\":%s}"
             .formatted(id, jsonValue(status), jsonValue(payStatus)));
+    if (payStatus != null && !payStatus.equals(oldPayStatus)) {
+      long userId = ((Number) order.get("user_id")).longValue();
+      int priceCent = ((Number) order.get("price_cent")).intValue();
+      if ("paid".equals(payStatus)) {
+        memberAssetService.grantPaidOrderPoints(id, userId, priceCent, "admin_order");
+      } else if ("refunded".equals(payStatus) && "paid".equals(oldPayStatus)) {
+        memberAssetService.reversePaidOrderPoints(id, userId, priceCent, "admin_order");
+      }
+    }
     return orderById(id);
   }
 
@@ -541,6 +554,19 @@ public class AdminService {
         orderId);
     if (rows.isEmpty()) {
       throw ApiException.notFound("订单不存在，无法绑定底片");
+    }
+    return rows.get(0);
+  }
+
+  private Map<String, Object> requireOrderForUpdate(long orderId) {
+    List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
+        SELECT id, user_id, price_cent, pay_status
+        FROM orders
+        WHERE id = ?
+        FOR UPDATE
+        """, orderId);
+    if (rows.isEmpty()) {
+      throw ApiException.notFound("订单不存在");
     }
     return rows.get(0);
   }

@@ -4,6 +4,7 @@ import Taro from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
 import { useAuthStore } from '@/store/useAuthStore';
+import { sendLoginSms } from '@/api/auth';
 
 const CODE_LEN = 6;
 
@@ -14,15 +15,18 @@ const maskPhone = (phone: string) => {
 };
 
 const LoginCodePage: React.FC = () => {
-  const { phone = '', redirect: redirectParam } = Taro.getCurrentInstance().router?.params ?? {};
+  const { phone = '', redirect: redirectParam, devCode: devCodeParam } = Taro.getCurrentInstance().router?.params ?? {};
   const loginWithPhone = useAuthStore((s) => s.loginWithPhone);
 
   const [code, setCode] = useState('');
   const [leftSec, setLeftSec] = useState(55);
+  const [devCode, setDevCode] = useState(() => (devCodeParam ? decodeURIComponent(String(devCodeParam)) : ''));
   const [submitting, setSubmitting] = useState(false);
+  const [resending, setResending] = useState(false);
   const inputRef = useRef<any>(null);
 
-  const masked = useMemo(() => maskPhone(decodeURIComponent(phone)), [phone]);
+  const plainPhone = useMemo(() => decodeURIComponent(phone).replace(/\s/g, ''), [phone]);
+  const masked = useMemo(() => maskPhone(plainPhone), [plainPhone]);
   const canSubmit = code.length === CODE_LEN && !submitting;
   const redirect = useMemo(() => {
     if (!redirectParam) return '';
@@ -129,18 +133,30 @@ const LoginCodePage: React.FC = () => {
       />
 
       <View className={styles.hintRow}>
-        <Text className={styles.hintText}>提示：输入任意6位数字即可（模拟）</Text>
+        <Text className={styles.hintText}>{devCode ? `开发环境验证码：${devCode}` : '请输入短信验证码'}</Text>
         <Text
           className={styles.resend}
           onClick={() => {
-            if (leftSec > 0) return;
-            setLeftSec(55);
-            Taro.showToast({ title: '已重新发送', icon: 'none' }).catch((err) =>
-              console.error('[Toast] showToast error', err)
-            );
+            if (leftSec > 0 || resending) return;
+            setResending(true);
+            sendLoginSms(plainPhone)
+              .then((result) => {
+                setDevCode(result.devCode ?? '');
+                setLeftSec(55);
+                Taro.showToast({ title: '已重新发送', icon: 'none' }).catch((err) =>
+                  console.error('[Toast] showToast error', err)
+                );
+              })
+              .catch((err) => {
+                console.error('[Auth] resend sms error', err);
+                Taro.showToast({ title: '发送失败，请重试', icon: 'none' }).catch((toastErr) =>
+                  console.error('[Toast] showToast error', toastErr)
+                );
+              })
+              .finally(() => setResending(false));
           }}
         >
-          {leftSec > 0 ? `${leftSec}s 后重新发送` : '重新发送'}
+          {resending ? '发送中...' : leftSec > 0 ? `${leftSec}s 后重新发送` : '重新发送'}
         </Text>
       </View>
 
@@ -154,7 +170,7 @@ const LoginCodePage: React.FC = () => {
             return;
           }
           setSubmitting(true);
-          loginWithPhone(decodeURIComponent(phone), code)
+          loginWithPhone(plainPhone, code)
             .then(() => {
               Taro.showToast({ title: '登录成功', icon: 'success' }).catch((err) =>
                 console.error('[Toast] showToast error', err)

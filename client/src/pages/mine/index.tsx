@@ -1,8 +1,15 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import styles from './index.module.scss';
 import { useAuthStore } from '@/store/useAuthStore';
+import { fetchMemberSummary } from '@/api/auth';
+import type { MemberSummary } from '@/types/domain';
+
+const formatBalance = (cent = 0) => {
+  if (cent % 100 === 0) return `¥${cent / 100}`;
+  return `¥${(cent / 100).toFixed(2)}`;
+};
 
 const MinePage: React.FC = () => {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
@@ -10,35 +17,69 @@ const MinePage: React.FC = () => {
   const loginMethod = useAuthStore((s) => s.loginMethod);
   const logout = useAuthStore((s) => s.logout);
 
-  const user = useMemo(() => {
-    if (!authUser) {
-      return {
-        name: '未登录',
-        phone: '',
-        levelName: '普通会员',
-        growth: 0,
-        nextNeed: 380
-      };
+  const [summary, setSummary] = useState<MemberSummary>();
+  const [loadingSummary, setLoadingSummary] = useState(false);
+  const [summaryError, setSummaryError] = useState('');
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setSummary(undefined);
+      setSummaryError('');
+      setLoadingSummary(false);
+      return;
     }
-    const showPhone = loginMethod === 'phone' && !!authUser.phone;
+
+    let alive = true;
+    setLoadingSummary(true);
+    setSummaryError('');
+    fetchMemberSummary()
+      .then((nextSummary) => {
+        if (alive) setSummary(nextSummary);
+      })
+      .catch((err) => {
+        if (!alive) return;
+        console.error('[Mine] load member summary error', err);
+        setSummaryError('会员数据加载失败，请稍后重试');
+      })
+      .finally(() => {
+        if (alive) setLoadingSummary(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [isLoggedIn]);
+
+  const user = useMemo(() => {
+    const phone = authUser?.phone;
+    const showPhone = loginMethod === 'phone' && !!phone;
     return {
-      name: authUser.realName || authUser.nickName || '微信用户',
-      phone: showPhone ? authUser.phone!.replace(/^(\d{3})\d+(\d{4})$/, '$1****$2') : '',
-      levelName: '普通会员',
-      growth: authUser.realName ? 120 : 0,
-      nextNeed: authUser.realName ? 380 : 500
+      name: authUser?.realName || authUser?.nickName || '微信用户',
+      phone: showPhone ? phone.replace(/^(\d{3})\d+(\d{4})$/, '$1****$2') : ''
     };
   }, [authUser, loginMethod]);
 
-  const stats = useMemo(
-    () => [
-      { key: 'coupon', label: '优惠券', value: '3张' },
-      { key: 'point', label: '积分', value: '120' },
-      { key: 'balance', label: '余额', value: '¥0' },
-      { key: 'card', label: '次卡', value: '3次' }
-    ],
-    []
-  );
+  const stats = useMemo(() => {
+    const pending = isLoggedIn && (loadingSummary || !summary);
+    return [
+      { key: 'coupon', label: '优惠券', value: pending ? '--' : `${summary?.couponCount ?? 0}张` },
+      { key: 'point', label: '积分', value: pending ? '--' : String(summary?.pointBalance ?? 0) },
+      { key: 'balance', label: '余额', value: pending ? '--' : formatBalance(summary?.balanceCent ?? 0) },
+      { key: 'card', label: '次卡', value: pending ? '--' : `${summary?.cardCount ?? 0}次` }
+    ];
+  }, [isLoggedIn, loadingSummary, summary?.balanceCent, summary?.cardCount, summary?.couponCount, summary?.pointBalance]);
+
+  const summaryPending = isLoggedIn && loadingSummary;
+  const levelName = summaryPending ? '加载中' : summary?.levelName ?? '会员';
+  const growthText = summaryPending ? '--' : String(summary?.growth ?? '--');
+  const levelProgress = summary ? (summary.nextNeed > 0 ? Math.min(100, (summary.growth / (summary.growth + summary.nextNeed)) * 100) : 100) : 0;
+  const nextLevelText = summaryPending
+    ? '会员数据加载中'
+    : summary
+      ? summary.nextNeed > 0
+        ? `距${summary.nextLevelName}还差 ${summary.nextNeed} 成长值`
+        : '已达到最高会员等级'
+      : '会员数据暂不可用';
 
   const goLogin = () => {
     Taro.navigateTo({ url: `/pages/auth/login/index?redirect=${encodeURIComponent('/pages/mine/index')}` }).catch((err) =>
@@ -120,33 +161,34 @@ const MinePage: React.FC = () => {
       )}
 
       {isLoggedIn && (
-      <>
-      <View className={styles.userCard}>
-        <View className={styles.userTop}>
-          <View className={styles.avatar}>
-            <Text className={styles.avatarText}>🙂</Text>
-          </View>
-          <View className={styles.userInfo}>
-            <Text className={styles.userName}>{user.name}</Text>
-            {!!user.phone && <Text className={styles.userPhone}>手机：{user.phone}</Text>}
-            <View className={styles.userBadges}>
-              <View className={styles.badge}>
-                <Text className={styles.badgeText}>👑 {user.levelName}</Text>
+        <>
+          <View className={styles.userCard}>
+            <View className={styles.userTop}>
+              <View className={styles.avatar}>
+                <Text className={styles.avatarText}>🙂</Text>
               </View>
-              <Text className={styles.growthText}>成长值 {user.growth}</Text>
+              <View className={styles.userInfo}>
+                <Text className={styles.userName}>{user.name}</Text>
+                {!!user.phone && <Text className={styles.userPhone}>手机：{user.phone}</Text>}
+                <View className={styles.userBadges}>
+                  <View className={styles.badge}>
+                    <Text className={styles.badgeText}>👑 {levelName}</Text>
+                  </View>
+                  <Text className={styles.growthText}>成长值 {growthText}</Text>
+                </View>
+                {!!summaryError && <Text className={styles.summaryHint}>{summaryError}</Text>}
+              </View>
+              <Text className={styles.userArrow}>›</Text>
             </View>
           </View>
-          <Text className={styles.userArrow}>›</Text>
-        </View>
-      </View>
 
       <View className={styles.levelCard}>
         <View className={styles.levelRow}>
-          <Text className={styles.levelLeft}>{user.levelName}</Text>
-          <Text className={styles.levelRight}>距银牌会员还差 {user.nextNeed} 成长值</Text>
+          <Text className={styles.levelLeft}>{levelName}</Text>
+          <Text className={styles.levelRight}>{nextLevelText}</Text>
         </View>
         <View className={styles.progressTrack}>
-          <View className={styles.progressFill} style={{ width: `${Math.min(100, (user.growth / (user.growth + user.nextNeed)) * 100)}%` }} />
+          <View className={styles.progressFill} style={{ width: `${levelProgress}%` }} />
         </View>
       </View>
 
@@ -173,7 +215,9 @@ const MinePage: React.FC = () => {
             <Text className={styles.rowTitle}>我的优惠券</Text>
           </View>
           <View className={styles.rowRight}>
-            <Text className={styles.rowRightText}>3张可用</Text>
+            <Text className={styles.rowRightText}>
+              {loadingSummary ? '加载中' : summary ? `${summary.couponCount}张可用` : '--'}
+            </Text>
             <Text className={styles.rowArrow}>›</Text>
           </View>
         </View>
@@ -191,7 +235,9 @@ const MinePage: React.FC = () => {
             <Text className={styles.rowTitle}>会员卡/次卡</Text>
           </View>
           <View className={styles.rowRight}>
-            <Text className={styles.rowRightText}>1张有效</Text>
+            <Text className={styles.rowRightText}>
+              {loadingSummary ? '加载中' : summary ? `${summary.cardCount}张有效` : '--'}
+            </Text>
             <Text className={styles.rowArrow}>›</Text>
           </View>
         </View>
@@ -209,7 +255,9 @@ const MinePage: React.FC = () => {
             <Text className={styles.rowTitle}>积分明细</Text>
           </View>
           <View className={styles.rowRight}>
-            <Text className={styles.rowRightText}>120分</Text>
+            <Text className={styles.rowRightText}>
+              {loadingSummary ? '加载中' : summary ? `${summary.pointBalance}分` : '--'}
+            </Text>
             <Text className={styles.rowArrow}>›</Text>
           </View>
         </View>
@@ -227,7 +275,9 @@ const MinePage: React.FC = () => {
             <Text className={styles.rowTitle}>余额与明细</Text>
           </View>
           <View className={styles.rowRight}>
-            <Text className={styles.rowRightText}>¥0</Text>
+            <Text className={styles.rowRightText}>
+              {loadingSummary ? '加载中' : summary ? formatBalance(summary.balanceCent) : '--'}
+            </Text>
             <Text className={styles.rowArrow}>›</Text>
           </View>
         </View>

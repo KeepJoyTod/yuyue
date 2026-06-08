@@ -17,6 +17,26 @@ export interface LoginResponseDto {
   user: UserDto;
 }
 
+export interface SmsSendResponseDto {
+  phone: string;
+  scene: string;
+  expiresAt: string;
+  devCode?: string;
+}
+
+export interface UserSummaryDto {
+  levelName: string;
+  nextLevelName: string;
+  growth: number;
+  nextNeed: number;
+  couponCount: number;
+  pointBalance: number;
+  balanceCent: number;
+  cardCount: number;
+  orderCount: number;
+  completedOrderCount: number;
+}
+
 export interface ServiceCategoryDto {
   id: string;
   code: string;
@@ -104,5 +124,7 @@ export interface NegativeDto {
   title: string;
   type: string;
   imageUrl: string;
+  fileId?: string;
+  downloadUrl?: string;
   createdAt: string;
 }

@@ -3,13 +3,15 @@ import { View, Text, Input } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
+import { sendLoginSms } from '@/api/auth';
 
 const LoginPhonePage: React.FC = () => {
   const { redirect: redirectParam } = Taro.getCurrentInstance().router?.params ?? {};
   const [phone, setPhone] = useState('');
+  const [sending, setSending] = useState(false);
 
   const cleanPhone = useMemo(() => phone.replace(/\s/g, ''), [phone]);
-  const canNext = cleanPhone.length >= 8;
+  const canNext = /^1\d{10}$/.test(cleanPhone) && !sending;
   const redirect = useMemo(() => {
     if (!redirectParam) return '';
     try {
@@ -59,25 +61,42 @@ const LoginPhonePage: React.FC = () => {
       </View>
 
       <Text className={styles.hint}>
-        提示：<Text className={styles.hintStrong}>测试账号 138 0013 8000</Text>（验证码任意6位）
+        提示：验证码由后端发送，开发环境会直接显示本次验证码。
       </Text>
 
       <View
         className={classnames(styles.submitBtn, !canNext && styles.submitBtnDisabled)}
         onClick={() => {
           if (!canNext) {
-            Taro.showToast({ title: '请输入手机号', icon: 'none' }).catch((err) =>
+            Taro.showToast({ title: sending ? '验证码发送中' : '请输入 11 位手机号', icon: 'none' }).catch((err) =>
               console.error('[Toast] showToast error', err)
             );
             return;
           }
-          const url = redirect
-            ? `/pages/auth/code/index?phone=${encodeURIComponent(cleanPhone)}&redirect=${encodeURIComponent(redirect)}`
-            : `/pages/auth/code/index?phone=${encodeURIComponent(cleanPhone)}`;
-          Taro.navigateTo({ url }).catch((err) => console.error('[Nav] code error', err));
+          setSending(true);
+          sendLoginSms(cleanPhone)
+            .then((result) => {
+              const url = redirect
+                ? `/pages/auth/code/index?phone=${encodeURIComponent(cleanPhone)}&redirect=${encodeURIComponent(redirect)}${
+                    result.devCode ? `&devCode=${encodeURIComponent(result.devCode)}` : ''
+                  }`
+                : `/pages/auth/code/index?phone=${encodeURIComponent(cleanPhone)}${
+                    result.devCode ? `&devCode=${encodeURIComponent(result.devCode)}` : ''
+                  }`;
+              Taro.navigateTo({ url }).catch((err) => console.error('[Nav] code error', err));
+            })
+            .catch((err) => {
+              console.error('[Auth] send sms error', err);
+              Taro.showToast({ title: '验证码发送失败', icon: 'none' }).catch((toastErr) =>
+                console.error('[Toast] showToast error', toastErr)
+              );
+            })
+            .finally(() => setSending(false));
         }}
       >
-        <Text className={classnames(styles.submitText, !canNext && styles.submitTextDisabled)}>获取验证码</Text>
+        <Text className={classnames(styles.submitText, !canNext && styles.submitTextDisabled)}>
+          {sending ? '发送中...' : '获取验证码'}
+        </Text>
       </View>
 
       <Text className={styles.footer}>琥珀映画 · 专业摄影服务平台 · 技术支持</Text>
